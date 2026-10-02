@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pedido · Studio Keite Monik</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Jost:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#FBF8F3;--card:#fff;--ink:#2A231F;--muted:#7A6E66;--line:#ECE4DA;--gold:#A9824B;--ok:#2F6B4F;--err:#A33B2E}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--ink);font:400 15px/1.55 "Jost",system-ui,sans-serif;min-height:100vh;display:grid;place-items:center;padding:24px 16px}
+  .box{width:min(480px,100%);background:var(--card);border:1px solid var(--line);border-radius:18px;padding:28px 22px;text-align:center}
+  .ic{width:58px;height:58px;border-radius:50%;display:grid;place-items:center;margin:0 auto 14px;font-size:26px;color:#fff}
+  h1{font:600 30px/1.1 "Cormorant Garamond",serif;margin-bottom:8px}
+  p{color:var(--muted)}
+  .resumo{text-align:left;margin:20px 0;border-top:1px solid var(--line);padding-top:14px;font-size:14px;display:grid;gap:6px}
+  .resumo div{display:flex;justify-content:space-between;gap:12px}
+  .resumo .t{font-weight:600;border-top:1px solid var(--line);padding-top:8px;margin-top:4px}
+  a.btn{display:block;padding:14px;border-radius:12px;font-weight:600;text-decoration:none;margin-top:10px}
+  .zap{background:#1F7A4D;color:#fff}
+  .volta{border:1px solid var(--line);color:var(--ink)}
+</style>
+</head>
+<body>
+<main class="box" id="box"></main>
+<script>
+const R$ = v => Number(v).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
+const esc = s => String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const q = new URLSearchParams(location.search);
+const status = q.get("status") || "aprovado";
+let ped = null; try{ ped = JSON.parse(localStorage.getItem("km_ultimo_pedido")) }catch{}
+const ZAP = "5511985169729";
+
+const txt = {
+  aprovado: {cor:"var(--ok)", ic:"✓", t:"Pedido confirmado!", p:"Recebemos seu pagamento. Vamos separar seu cabelo com carinho e te avisar quando for enviado."},
+  pendente: {cor:"var(--gold)", ic:"…", t:"Aguardando pagamento", p:"Assim que o Pix ou boleto for compensado, seu pedido é confirmado automaticamente."},
+  recusado: {cor:"var(--err)", ic:"!", t:"Pagamento não concluído", p:"Nada foi cobrado. Você pode tentar de novo com outra forma de pagamento."}
+}[status] || {};
+
+let resumo = "", msg = "";
+if (ped){
+  resumo = `<div class="resumo"><div><span>Pedido</span><b>${esc(ped.pedido)}</b></div>
+    ${ped.itens.map(i=>`<div><span>${i.qtd}× ${esc(i.nome)}</span></div>`).join("")}
+    <div><span>Frete (${esc(ped.frete.nome)})</span><span>${R$(ped.frete.preco)}</span></div>
+    <div class="t"><span>Total</span><span>${R$(ped.total)}</span></div></div>`;
+  msg = `Olá! Fiz o pedido ${ped.pedido} na loja do site.\n` +
+    ped.itens.map(i=>`• ${i.qtd}× ${i.nome}`).join("\n") +
+    `\nFrete: ${ped.frete.nome}\nTotal: ${R$(ped.total)}\nNome: ${ped.cliente.nome}\nStatus: ${txt.t}`;
+}
+if (status === "aprovado"){ try{ localStorage.removeItem("km_sacola") }catch{} }
+
+document.getElementById("box").innerHTML = `
+  <div class="ic" style="background:${txt.cor}">${txt.ic}</div>
+  <h1>${txt.t}</h1><p>${txt.p}</p>${resumo}
+  ${ped?`<a class="btn zap" target="_blank" rel="noopener" href="https://wa.me/${ZAP}?text=${encodeURIComponent(msg)}">Avisar o Studio pelo WhatsApp</a>`:""}
+  <a class="btn volta" href="/">${status==="recusado"?"Voltar e tentar de novo":"Voltar para a loja"}</a>`;
+</script>
+</body>
+</html>

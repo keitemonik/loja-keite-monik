@@ -1,0 +1,153 @@
+{
+  "loja": {
+    "nome": "Studio Keite Monik",
+    "cepOrigem": "33821213",
+    "whatsapp": "5511985169729",
+    "instagram": "studiokeite.monik",
+    "embalagem": {
+      "altura": 2,
+      "largura": 11,
+      "comprimento": 16,
+      "pesoGramas": 50
+    },
+    "ofertaRelampago": {
+      "inicio": "2026-10-02T00:00:00-03:00",
+      "horasPromo": 24,
+      "minutosNormal": 30,
+      "toleranciaMinutos": 5
+    }
+  },
+  "produtos": [
+    {
+      "id": "preto-liso-100g",
+      "nome": "Preto Liso – 100G",
+      "categoria": "Cabelo Humanizado",
+      "preco": 150.0,
+      "precoDe": 169.9,
+      "gramas": 100,
+      "fotos": [
+        "img/preto-liso.jpg",
+        "img/preto-liso-2.jpg"
+      ],
+      "descricao": "Preto intenso, liso e com brilho natural. Fibra humanizada com toque macio e caimento leve."
+    },
+    {
+      "id": "preto-ondulado-100g",
+      "nome": "Preto Ondulado – 100G",
+      "categoria": "Cabelo Humanizado",
+      "preco": 150.0,
+      "precoDe": 169.9,
+      "gramas": 100,
+      "fotos": [
+        "img/preto-ondulado.jpg"
+      ],
+      "descricao": "Preto com ondas abertas nas pontas, volume e movimento natural."
+    },
+    {
+      "id": "castanho-liso-100g",
+      "nome": "Castanho Liso – 100G",
+      "categoria": "Cabelo Humanizado",
+      "preco": 150.0,
+      "precoDe": 169.9,
+      "gramas": 100,
+      "fotos": [
+        "img/castanho-liso.jpg"
+      ],
+      "descricao": "Castanho escuro, liso e alinhado, com brilho saudável."
+    },
+    {
+      "id": "castanho-ondulado-100g",
+      "nome": "Castanho Ondulado – 100G",
+      "categoria": "Cabelo Humanizado",
+      "preco": 150.0,
+      "precoDe": 169.9,
+      "gramas": 100,
+      "fotos": [
+        "img/castanho-ondulado.jpg"
+      ],
+      "descricao": "Castanho com pontas levemente onduladas e acabamento natural."
+    },
+    {
+      "id": "loiro-mesclado-ondulado-100g",
+      "nome": "Loiro mesclado Ondulado – 100G",
+      "categoria": "Cabelo Humanizado",
+      "preco": 150.0,
+      "precoDe": 169.9,
+      "gramas": 100,
+      "fotos": [
+        "img/loiro-mesclado-ondulado.jpg"
+      ],
+      "descricao": "Base escura com mechas loiras e pontas onduladas."
+    },
+    {
+      "id": "loiro-raiz-esfumada",
+      "nome": "Loiro Raiz esfumada",
+      "categoria": "Cabelo Humanizado",
+      "preco": 150.0,
+      "precoDe": 169.9,
+      "gramas": 100,
+      "fotos": [
+        "img/loiro-raiz-esfumada.jpg"
+      ],
+      "descricao": "Loiro iluminado com raiz esfumada escura, liso e com caimento leve."
+    },
+    {
+      "id": "loiro-escuro-ombre",
+      "nome": "Loiro escuro ombré",
+      "categoria": "Cabelo Humanizado",
+      "preco": 150.0,
+      "precoDe": 169.9,
+      "gramas": 100,
+      "fotos": [
+        "img/loiro-escuro-ombre.jpg",
+        "img/loiro-escuro-ombre-2.jpg"
+      ],
+      "descricao": "Degradê do escuro até as pontas claras, efeito ombré marcante."
+    },
+    {
+      "id": "morena-iluminada",
+      "nome": "Morena Iluminada",
+      "categoria": "Cabelo Humanizado",
+      "preco": 150.0,
+      "precoDe": 169.9,
+      "gramas": 100,
+      "fotos": [
+        "img/morena-iluminada.jpg",
+        "img/morena-iluminada-2.jpg"
+      ],
+      "descricao": "Castanho com luzes douradas e ondas, efeito morena iluminada."
+    },
+    {
+      "id": "morena-iluminada-ombre-cobre",
+      "nome": "Morena Iluminada Ombré cobre",
+      "categoria": "Cabelo Humanizado",
+      "preco": 150.0,
+      "precoDe": 169.9,
+      "gramas": 100,
+      "fotos": [
+        "img/morena-iluminada-ombre-cobre.jpg"
+      ],
+      "descricao": "Base escura com degradê até as pontas acobreadas."
+    },
+    {
+      "id": "micromecha-50g",
+      "nome": "50G Micromecha Fibra Humanizada",
+      "categoria": "Micromecha",
+      "preco": 140.0,
+      "precoDe": null,
+      "gramas": 50,
+      "fotos": [],
+      "descricao": "Micromecha de fibra humanizada, pacote de 50G."
+    },
+    {
+      "id": "micromecha-100g",
+      "nome": "100G Micromecha Fibra Humanizada",
+      "categoria": "Micromecha",
+      "preco": 280.0,
+      "precoDe": null,
+      "gramas": 100,
+      "fotos": [],
+      "descricao": "Micromecha de fibra humanizada, pacote de 100G."
+    }
+  ]
+}
