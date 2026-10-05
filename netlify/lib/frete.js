@@ -1,5 +1,6 @@
 // Cálculo de frete no SuperFrete (usado pelas funções frete e pagamento)
 const catalogo = require("../../produtos.json");
+const { variacoesAtivas } = require("./banco");
 
 const API = process.env.SUPERFRETE_SANDBOX === "true"
   ? "https://sandbox.superfrete.com/api/v0/calculator"
@@ -17,14 +18,23 @@ function precoAtual(p) { return p.precoDe && !emPromocao() ? p.precoDe : p.preco
 
 function soDigitos(v) { return String(v || "").replace(/\D/g, ""); }
 
-// Confere os itens da sacola com o catálogo (o preço nunca vem do navegador)
-function validarItens(itens) {
+function rotulo(v) {
+  return [v.produtoNome, v.peso_g ? v.peso_g + "g" : null, v.tamanho].filter(Boolean).join(" · ");
+}
+
+// Confere os itens da sacola com o painel (o preço nunca vem do navegador)
+async function validarItens(itens) {
   if (!Array.isArray(itens) || !itens.length) throw new Error("Sacola vazia.");
+  const mapa = await variacoesAtivas(itens.map((i) => i.id));
   return itens.map((i) => {
-    const p = catalogo.produtos.find((x) => x.id === i.id);
+    const v = mapa[i.id];
     const qtd = Math.max(1, Math.min(20, parseInt(i.qtd, 10) || 1));
-    if (!p) throw new Error("Produto não encontrado: " + i.id);
-    return { ...p, preco: precoAtual(p), qtd };
+    if (!v) throw new Error("Um item da sacola não está mais disponível. Remova e tente de novo.");
+    const nome = rotulo(v);
+    if (v.estoque != null && v.estoque < qtd) {
+      throw new Error(v.estoque === 0 ? `${nome} esgotou.` : `Só temos ${v.estoque} unidade(s) de ${nome}.`);
+    }
+    return { ...v, nome, preco: precoAtual(v), qtd };
   });
 }
 

@@ -94,6 +94,9 @@
   .chip{flex:none;padding:9px 16px;border-radius:999px;border:1px solid var(--line);background:var(--card);font-size:14px}
   .chip[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:#fff}
 
+  .chip.sub{padding:7px 13px;font-size:13px;background:transparent}
+  .chip.sub[aria-pressed="true"]{background:var(--gold-soft);border-color:var(--gold);color:#5A4426}
+
   /* Vitrine */
   .grade{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;padding-bottom:60px}
   @media(min-width:720px){.grade{grid-template-columns:repeat(3,1fr);gap:22px}}
@@ -152,6 +155,14 @@
   .qtd button{width:36px;height:36px;font-size:18px}
   .qtd span{min-width:28px;text-align:center;font-weight:500}
 
+  /* Opções do produto */
+  .opgrupo{margin-top:16px;display:grid;gap:8px}
+  .opgrupo>span{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);font-weight:500}
+  .opchips{display:flex;gap:8px;flex-wrap:wrap}
+  .opchip{min-width:64px;padding:10px 14px;border-radius:10px;border:1px solid var(--line);background:var(--card);font-weight:500;font-size:14.5px}
+  .opchip[aria-pressed="true"]{border-color:var(--ink);background:var(--ink);color:#fff}
+  .opchip[data-off]{opacity:.4;text-decoration:line-through}
+
   /* Sacola */
   .item{display:grid;grid-template-columns:64px 1fr auto;gap:12px;padding:12px 0;border-bottom:1px solid var(--line);align-items:center}
   .item .mini{width:64px;height:80px;border-radius:10px;overflow:hidden}
@@ -206,19 +217,20 @@
   <section class="banners" aria-label="Destaques">
     <div class="slides" id="slides">
       <div class="slide"><img src="img/morena-iluminada.jpg" alt="Cabelo morena iluminada">
-        <div class="slide-txt"><small>Cabelo humanizado · 100G</small><h2 id="b1preco">De R$ 169,90 <em>por R$ 150</em></h2><p>Liso, ondulado, ombré e iluminado. Escolha a sua cor.</p><button data-ir="Cabelo Humanizado">Ver cabelos</button></div></div>
+        <div class="slide-txt"><small>Fibra humanizada</small><h2 id="b1preco">De R$ 169,90 <em>por R$ 149,90</em></h2><p>100g ou 150g, em 50/55, 60/65 ou 70/75cm. Escolha a sua cor.</p><button data-ir="fibras-humanizadas">Ver cabelos</button></div></div>
       <div class="slide"><img src="img/loiro-raiz-esfumada.jpg" alt="Cabelo loiro com raiz esfumada">
-        <div class="slide-txt"><small>Fibra humanizada</small><h2>Toque macio, <em>brilho natural</em></h2><p>Os mesmos cabelos que usamos nas clientes do Studio.</p><button data-ir="Todos">Conhecer a loja</button></div></div>
+        <div class="slide-txt"><small>Fibra humanizada</small><h2>Toque macio, <em>brilho natural</em></h2><p>Os mesmos cabelos que usamos nas clientes do Studio.</p><button data-ir="todos">Conhecer a loja</button></div></div>
       <div class="slide"><img src="img/preto-ondulado.jpg" alt="Cabelo preto ondulado">
-        <div class="slide-txt"><small>Micromecha</small><h2>A partir de <em>R$ 140</em></h2><p>Micromecha de fibra humanizada em 50G e 100G.</p><button data-ir="Micromecha">Ver micromechas</button></div></div>
+        <div class="slide-txt"><small>Micromecha</small><h2>A partir de <em>R$ 140</em></h2><p>Micromecha de fibra humanizada em 50G e 100G.</p><button data-ir="micromechas">Ver micromechas</button></div></div>
       <div class="slide"><img src="img/morena-iluminada-ombre-cobre.jpg" alt="Cabelo ombré cobre">
-        <div class="slide-txt"><small>Entrega</small><h2>Enviamos para <em>todo o Brasil</em></h2><p>Pix, cartão ou boleto. Envio pelos Correios com rastreio.</p><button data-ir="Todos">Comprar agora</button></div></div>
+        <div class="slide-txt"><small>Entrega</small><h2>Enviamos para <em>todo o Brasil</em></h2><p>Pix, cartão ou boleto. Envio pelos Correios com rastreio.</p><button data-ir="todos">Comprar agora</button></div></div>
     </div>
     <div class="bolinhas" id="bolinhas"></div>
   </section>
   <div class="relampago" id="relampago" aria-live="off"></div>
 
   <nav class="filtros" id="filtros" aria-label="Categorias"></nav>
+  <nav class="filtros" id="subfiltros" aria-label="Subcategorias" style="padding-top:0;margin-top:-6px" hidden></nav>
   <section class="grade" id="grade" aria-live="polite"></section>
 </main>
 
@@ -256,7 +268,7 @@ const R$ = v => v.toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
 const $ = s => document.querySelector(s);
 const esc = s => String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 
-let LOJA, PRODUTOS = [], filtro = "Todos";
+let LOJA, PRODUTOS = [], CATS = [], VARS = {}, filtro = {cat:"todos", sub:null};
 
 /* Oferta relâmpago (mesma regra do servidor) */
 function fase(){
@@ -266,55 +278,113 @@ function fase(){
   const c=(((Date.now()-Date.parse(o.inicio))%T)+T)%T;
   return c<P ? {promo:true, resta:P-c} : {promo:false, resta:T-c};
 }
-function preco(p){ return (p.precoDe && !fase().promo) ? p.precoDe : p.preco; }
+function preco(v){ return (v.precoDe && !fase().promo) ? v.precoDe : v.preco; }
 function hms(ms){ const s=Math.max(0,Math.floor(ms/1000)); return [Math.floor(s/3600),Math.floor(s/60)%60,s%60].map(n=>String(n).padStart(2,"0")); }
-let sacola = ler("km_sacola", []);
+let sacola = ler("km_sacola2", []);
 let fretes = [], freteSel = null, cepCotado = "";
 let etapa = "sacola"; // sacola | dados
 
 function ler(k, padrao){ try{ return JSON.parse(localStorage.getItem(k)) ?? padrao }catch{ return padrao } }
 function salvar(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)) }catch{} }
 
-fetch("produtos.json").then(r=>r.json()).then(d=>{
-  LOJA = d.loja; PRODUTOS = d.produtos;
+const SB_URL = "https://bdinijwgoajpiizxizhs.supabase.co", SB_KEY = "sb_publishable_RU98YL-ArsSMYaasML9TLQ_zGmNkSzU";
+async function sbGet(caminho){
+  const r = await fetch(SB_URL + "/rest/v1/" + caminho, {headers:{apikey:SB_KEY}});
+  if (!r.ok) throw new Error("banco"); return r.json();
+}
+const ordTam = t => parseInt(String(t||"").match(/\d+/)?.[0]||"0",10);
+async function catalogoDoPainel(){
+  const [prods, cats] = await Promise.all([
+    sbGet("loja_produtos?select=*,loja_variantes(*)&ativo=eq.true&order=ordem.asc,nome.asc"),
+    sbGet("loja_categorias?select=*&ativo=eq.true&order=ordem.asc,nome.asc")
+  ]);
+  const lista = prods.map(p=>({ id:p.id, nome:p.nome, categoria_id:p.categoria_id, fotos:p.fotos||[], descricao:p.descricao, gramas:p.gramas,
+    variantes:(p.loja_variantes||[]).filter(v=>v.ativo).map(v=>({id:v.id, peso_g:v.peso_g, tamanho:v.tamanho, preco:+v.preco,
+      precoDe:v.preco_de==null?null:+v.preco_de, estoque:v.estoque}))
+      .sort((a,b)=>(a.peso_g||0)-(b.peso_g||0) || ordTam(a.tamanho)-ordTam(b.tamanho)) }))
+    .filter(p=>p.variantes.length);
+  if (!lista.length) throw new Error("vazio");
+  return {lista, cats};
+}
+function deJson(d){ // reserva: catálogo antigo, só para exibir se o painel não responder
+  return d.produtos.map(p=>({ id:p.id, nome:p.nome, categoria_id:null, fotos:p.fotos, descricao:p.descricao, gramas:p.gramas,
+    variantes:[{id:p.id, peso_g:p.gramas, tamanho:null, preco:p.preco, precoDe:p.precoDe, estoque:null}] }));
+}
+Promise.all([fetch("produtos.json").then(r=>r.json()), catalogoDoPainel().catch(()=>null)]).then(([d, painel])=>{
+  LOJA = d.loja;
+  PRODUTOS = painel ? painel.lista : deJson(d);
+  CATS = painel ? painel.cats : [];
+  VARS = {};
+  PRODUTOS.forEach(p=>p.variantes.forEach(v=>VARS[v.id] = {v, p}));
   $("#linkZap").href = "https://wa.me/" + LOJA.whatsapp;
   $("#linkInsta").href = "https://instagram.com/" + LOJA.instagram;
-  sacola = sacola.filter(i => PRODUTOS.some(p => p.id === i.id));
+  sacola = sacola.filter(i => VARS[i.id]);
   montarFiltros(); vitrine(); contador(); tique();
 });
 
+/* Categorias */
+const cat = id => CATS.find(c=>c.id===id);
+const raizDe = id => { const c = cat(id); return c && c.pai_id ? cat(c.pai_id) : c; };
+const nomeCat = p => { const c = cat(p.categoria_id); if(!c) return ""; const r = raizDe(c.id); return r && r.id!==c.id ? `${r.nome} · ${c.nome}` : c.nome; };
+const temProduto = id => PRODUTOS.some(p => p.categoria_id===id || (cat(p.categoria_id)||{}).pai_id===id);
+function rotulo(p, v){ return [p.nome, v.peso_g ? v.peso_g+"g" : null, v.tamanho].filter(Boolean).join(" · "); }
+const disponivel = v => v.estoque!==0;
+
 function foto(p, cls=""){
-  if (p.fotos.length) return `<img class="${cls}" src="${p.fotos[0]}" alt="${esc(p.nome)}" loading="lazy">`;
-  const g = (p.nome.match(/\d+G/)||[""])[0];
-  return `<div class="sem-foto ${cls}"><div><b>${g}</b><span>Micromecha</span></div></div>`;
+  if (p.fotos.length) return `<img class="${cls}" src="${esc(p.fotos[0])}" alt="${esc(p.nome)}" loading="lazy">`;
+  const v = p.variantes[0]; const g = v && v.peso_g ? v.peso_g+"G" : "";
+  const r = raizDe(p.categoria_id);
+  return `<div class="sem-foto ${cls}"><div><b>${g}</b><span>${esc(r?r.nome:"")}</span></div></div>`;
 }
-function precoHTML(p){
-  const promo = p.precoDe && fase().promo;
-  return `<div class="precos">${promo?`<span class="de">${R$(p.precoDe)}</span>`:""}<span class="por">${R$(preco(p))}</span></div>${p.precoDe?`<span class="timer" data-timer></span>`:""}`;
+function precoHTML(v, aPartir){
+  const promo = v.precoDe && fase().promo;
+  return `<div class="precos">${aPartir?`<span class="de" style="text-decoration:none">a partir de</span>`:""}${promo?`<span class="de">${R$(v.precoDe)}</span>`:""}<span class="por">${R$(preco(v))}</span></div>${v.precoDe?`<span class="timer" data-timer></span>`:""}`;
+}
+function maisBarata(p){
+  const vs = p.variantes.filter(disponivel); const base = vs.length ? vs : p.variantes;
+  return base.reduce((a,b)=> preco(b)<preco(a) ? b : a);
 }
 
 function montarFiltros(){
-  const cats = ["Todos", ...new Set(PRODUTOS.map(p=>p.categoria))];
-  $("#filtros").innerHTML = cats.map(c=>`<button class="chip" aria-pressed="${c===filtro}" data-cat="${esc(c)}">${esc(c)}</button>`).join("");
+  const raizes = CATS.filter(c=>!c.pai_id && temProduto(c.id));
+  $("#filtros").innerHTML = [`<button class="chip" aria-pressed="${filtro.cat==="todos"}" data-cat="todos">Todos</button>`]
+    .concat(raizes.map(c=>`<button class="chip" aria-pressed="${filtro.cat===c.id}" data-cat="${esc(c.id)}">${esc(c.nome)}</button>`)).join("");
+  const subs = filtro.cat!=="todos" ? CATS.filter(c=>c.pai_id===filtro.cat && temProduto(c.id)) : [];
+  $("#subfiltros").hidden = !subs.length;
+  $("#subfiltros").innerHTML = subs.length ? [`<button class="chip sub" aria-pressed="${!filtro.sub}" data-sub="">Todos os ${esc(cat(filtro.cat).nome.toLowerCase())}</button>`]
+    .concat(subs.map(c=>`<button class="chip sub" aria-pressed="${filtro.sub===c.id}" data-sub="${esc(c.id)}">${esc(c.nome)}</button>`)).join("") : "";
 }
+$("#subfiltros").addEventListener("click", e=>{ const b = e.target.closest(".chip"); if(!b) return; filtro.sub = b.dataset.sub || null; montarFiltros(); vitrine(); });
 $("#filtros").addEventListener("click", e=>{
   const b = e.target.closest(".chip"); if(!b) return;
-  filtro = b.dataset.cat; montarFiltros(); vitrine();
+  if (b.dataset.cat!==undefined) filtro = {cat:b.dataset.cat, sub:null};
+  else filtro.sub = b.dataset.sub || null;
+  montarFiltros(); vitrine();
 });
+function passaFiltro(p){
+  if (filtro.cat==="todos") return true;
+  const c = cat(p.categoria_id); if (!c) return false;
+  if (filtro.sub) return c.id===filtro.sub;
+  return c.id===filtro.cat || c.pai_id===filtro.cat;
+}
 
 function vitrine(){
-  const lista = PRODUTOS.filter(p => filtro==="Todos" || p.categoria===filtro);
-  $("#grade").innerHTML = lista.map(p=>{
-    const off = p.precoDe && fase().promo ? Math.round((1 - p.preco/p.precoDe)*100) : 0;
+  const lista = PRODUTOS.filter(passaFiltro);
+  $("#grade").innerHTML = lista.length ? lista.map(p=>{
+    const v = maisBarata(p), varia = p.variantes.length>1, esgotado = !p.variantes.some(disponivel);
+    const aPartir = varia && new Set(p.variantes.map(preco)).size>1;
+    const off = v.precoDe && fase().promo ? Math.round((1 - v.preco/v.precoDe)*100) : 0;
     return `<article class="card">
-      <button class="foto" data-ver="${p.id}" aria-label="Ver ${esc(p.nome)}">${foto(p)}${off?`<span class="tag">-${off}%</span>`:""}</button>
+      <button class="foto" data-ver="${esc(p.id)}" aria-label="Ver ${esc(p.nome)}">${foto(p)}${off?`<span class="tag">-${off}%</span>`:""}</button>
       <div class="info">
-        <span class="cat">${esc(p.categoria)}</span>
-        <button class="nome" data-ver="${p.id}" style="text-align:left">${esc(p.nome)}</button>
-        ${precoHTML(p)}
-        <button class="add" data-add="${p.id}">Adicionar à sacola</button>
+        <span class="cat">${esc((cat(p.categoria_id)||{}).nome||"")}</span>
+        <button class="nome" data-ver="${esc(p.id)}" style="text-align:left">${esc(p.nome)}</button>
+        ${precoHTML(v, aPartir)}
+        ${esgotado?`<button class="add" disabled style="opacity:.45;cursor:not-allowed">Esgotado</button>`
+          : varia?`<button class="add" data-ver="${esc(p.id)}">Adicionar à sacola</button>`
+          : `<button class="add" data-add="${esc(v.id)}">Adicionar à sacola</button>`}
       </div></article>`;
-  }).join("");
+  }).join("") : `<p style="grid-column:1/-1;text-align:center;color:var(--muted);padding:40px 0">Nenhum produto nesta categoria por enquanto.</p>`;
 }
 $("#grade").addEventListener("click", e=>{
   const v = e.target.closest("[data-ver]"), a = e.target.closest("[data-add]");
@@ -323,27 +393,31 @@ $("#grade").addEventListener("click", e=>{
 });
 
 /* Produto */
-let qtdModal = 1;
+let qtdModal = 1, escolha = {peso:null, tam:null};
+const achar = (p, peso, tam) => p.variantes.find(v=>(v.peso_g||null)===peso && (v.tamanho||null)===tam);
 function abrirProduto(id){
   const p = PRODUTOS.find(x=>x.id===id); qtdModal = 1;
-  $("#mCat").textContent = p.categoria;
-  const fotos = p.fotos.length ? p.fotos.map(f=>`<img src="${f}" alt="${esc(p.nome)}">`).join("") : foto(p);
+  const ini = p.variantes.find(disponivel) || p.variantes[0];
+  escolha = {peso: ini.peso_g||null, tam: ini.tamanho||null};
+  $("#mCat").textContent = nomeCat(p);
+  const fotos = p.fotos.length ? p.fotos.map(f=>`<img src="${esc(f)}" alt="${esc(p.nome)}">`).join("") : foto(p);
+  const r = raizDe(p.categoria_id);
   $("#mCorpo").innerHTML = `<div class="det">
     <div><div class="galeria" id="galeria">${fotos}</div>
       ${p.fotos.length>1?`<div class="pontos">${p.fotos.map((_,i)=>`<i class="${i?"":"on"}"></i>`).join("")}</div>`:""}</div>
     <div>
       <h3 id="mNome">${esc(p.nome)}</h3>
-      ${precoHTML(p)}
+      <div id="mPreco"></div>
       <div class="pix">Pague com Pix ou em até 12x no cartão</div>
+      <div id="mOpcoes"></div>
       <p style="margin-top:14px">${esc(p.descricao)}</p>
       <div class="lista-info">
-        <div><b>Peso:</b> ${p.gramas}g</div>
-        <div><b>Material:</b> fibra humanizada</div>
+        ${r?`<div><b>Tipo:</b> ${esc(r.nome)}</div>`:""}
         <div><b>Envio:</b> Correios, com rastreio</div>
       </div>
       <div style="display:flex;gap:10px;align-items:center;margin-top:18px">
         <div class="qtd"><button data-q="-1" aria-label="Menos">−</button><span id="mQtd">1</span><button data-q="1" aria-label="Mais">+</button></div>
-        <button class="cta" style="flex:1" id="mAdd">Adicionar · ${R$(preco(p))}</button>
+        <button class="cta" style="flex:1" id="mAdd"></button>
       </div>
     </div></div>`;
   const g = $("#galeria");
@@ -351,23 +425,52 @@ function abrirProduto(id){
     const i = Math.round(g.scrollLeft / g.clientWidth);
     document.querySelectorAll(".pontos i").forEach((d,k)=>d.classList.toggle("on",k===i));
   });
-  $("#mCorpo").querySelectorAll("[data-q]").forEach(b=>b.onclick=()=>{
-    qtdModal = Math.max(1, Math.min(20, qtdModal + +b.dataset.q));
-    $("#mQtd").textContent = qtdModal; $("#mAdd").textContent = "Adicionar · " + R$(preco(p)*qtdModal);
+  $("#mCorpo").querySelectorAll("[data-q]").forEach(b=>b.onclick=()=>{ qtdModal = Math.max(1, Math.min(20, qtdModal + +b.dataset.q)); $("#mQtd").textContent = qtdModal; atualizarEscolha(p); });
+  $("#mOpcoes").addEventListener("click", e=>{
+    const b = e.target.closest("[data-op]"); if(!b || b.disabled) return;
+    if (b.dataset.op==="peso") escolha.peso = +b.dataset.val; else escolha.tam = b.dataset.val;
+    if (!achar(p, escolha.peso, escolha.tam)) { // ajusta o outro lado para uma combinação que exista
+      const alt = p.variantes.find(v=> b.dataset.op==="peso" ? (v.peso_g||null)===escolha.peso && disponivel(v) : (v.tamanho||null)===escolha.tam && disponivel(v))
+        || p.variantes.find(v=> b.dataset.op==="peso" ? (v.peso_g||null)===escolha.peso : (v.tamanho||null)===escolha.tam);
+      if (alt) escolha = {peso: alt.peso_g||null, tam: alt.tamanho||null};
+    }
+    atualizarEscolha(p);
   });
-  $("#mAdd").onclick = ()=>{ adicionar(p.id, qtdModal); fechar(); };
+  $("#mAdd").onclick = ()=>{ const v = achar(p, escolha.peso, escolha.tam); if (v && disponivel(v)) { adicionar(v.id, qtdModal); fechar(); } };
+  atualizarEscolha(p);
   abrir("#modal");
+}
+function atualizarEscolha(p){
+  const v = achar(p, escolha.peso, escolha.tam);
+  const pesos = [...new Set(p.variantes.map(x=>x.peso_g).filter(Boolean))].sort((a,b)=>a-b);
+  const tams = [...new Set(p.variantes.map(x=>x.tamanho).filter(Boolean))].sort((a,b)=>ordTam(a)-ordTam(b));
+  const grupo = (titulo, op, vals, atual, fmt, ok) => vals.length ? `<div class="opgrupo"><span>${titulo}</span><div class="opchips">${vals.map(x=>{
+      const valido = ok(x);
+      return `<button class="opchip" data-op="${op}" data-val="${esc(x)}" aria-pressed="${x===atual}" ${valido?"":'data-off="1"'}>${esc(fmt(x))}</button>`;
+    }).join("")}</div></div>` : "";
+  $("#mOpcoes").innerHTML =
+    grupo("Peso", "peso", pesos, escolha.peso, x=>x+"g", x=> p.variantes.some(y=>y.peso_g===x && disponivel(y))) +
+    grupo("Tamanho", "tam", tams, escolha.tam, x=>x, x=> p.variantes.some(y=>y.tamanho===x && (y.peso_g||null)===escolha.peso && disponivel(y)));
+  $("#mPreco").innerHTML = v ? precoHTML(v, false) : "";
+  const btn = $("#mAdd");
+  if (!v){ btn.disabled = true; btn.textContent = "Combinação indisponível"; }
+  else if (!disponivel(v)){ btn.disabled = true; btn.textContent = "Esgotado"; }
+  else { btn.disabled = false; btn.textContent = "Adicionar · " + R$(preco(v)*qtdModal); }
+  tique();
 }
 
 /* Sacola */
 function adicionar(id, q){
+  const ref = VARS[id]; if (!ref) return;
   const it = sacola.find(i=>i.id===id);
-  if (it) it.qtd = Math.min(20, it.qtd + q); else sacola.push({id, qtd:q});
+  const limite = ref.v.estoque!=null ? Math.min(20, ref.v.estoque) : 20;
+  if (limite<=0) return toast("Produto esgotado");
+  if (it) it.qtd = Math.min(limite, it.qtd + q); else sacola.push({id, qtd:Math.min(limite,q)});
   mudouSacola(); toast("Adicionado à sacola ✓");
 }
-function mudouSacola(){ salvar("km_sacola", sacola); fretes=[]; freteSel=null; contador(); if($("#gaveta").classList.contains("on")) renderSacola(); }
+function mudouSacola(){ salvar("km_sacola2", sacola); fretes=[]; freteSel=null; contador(); if($("#gaveta").classList.contains("on")) renderSacola(); }
 function contador(){ $("#qtdSacola").textContent = sacola.reduce((s,i)=>s+i.qtd,0); }
-function subtotal(){ return sacola.reduce((s,i)=>s + preco(PRODUTOS.find(p=>p.id===i.id))*i.qtd, 0); }
+function subtotal(){ return sacola.reduce((s,i)=>s + preco(VARS[i.id].v)*i.qtd, 0); }
 
 $("#abrirSacola").onclick = ()=>{ etapa="sacola"; renderSacola(); abrir("#gaveta"); };
 
@@ -382,10 +485,11 @@ function renderSacola(){
   $("#gTitulo").textContent = "Sua sacola";
   const cliente = ler("km_cliente", {});
   corpo.innerHTML = sacola.map(i=>{
-    const p = PRODUTOS.find(x=>x.id===i.id);
+    const {v, p} = VARS[i.id];
+    const extra = [v.peso_g?v.peso_g+"g":null, v.tamanho].filter(Boolean).join(" · ");
     return `<div class="item"><div class="mini">${foto(p)}</div>
-      <div><h4>${esc(p.nome)}</h4><small>${R$(preco(p))}</small><br><button class="remover" data-rem="${p.id}">Remover</button></div>
-      <div class="qtd"><button data-mq="${p.id}" data-d="-1" aria-label="Menos">−</button><span>${i.qtd}</span><button data-mq="${p.id}" data-d="1" aria-label="Mais">+</button></div></div>`;
+      <div><h4>${esc(p.nome)}</h4>${extra?`<small>${esc(extra)}</small><br>`:""}<small>${R$(preco(v))}</small><br><button class="remover" data-rem="${esc(v.id)}">Remover</button></div>
+      <div class="qtd"><button data-mq="${esc(v.id)}" data-d="-1" aria-label="Menos">−</button><span>${i.qtd}</span><button data-mq="${esc(v.id)}" data-d="1" aria-label="Mais">+</button></div></div>`;
   }).join("") + `
     <div class="bloco"><h5>Calcular frete</h5>
       <div class="linha"><input id="cep" inputmode="numeric" maxlength="9" placeholder="Seu CEP" value="${esc(cepCotado || cliente.cep || "")}"><button class="btn2" id="calc">Calcular</button></div>
@@ -401,7 +505,7 @@ function renderSacola(){
 $("#gCorpo").addEventListener("click", e=>{
   const r = e.target.closest("[data-rem]"), q = e.target.closest("[data-mq]");
   if (r){ sacola = sacola.filter(i=>i.id!==r.dataset.rem); mudouSacola(); }
-  if (q){ const it = sacola.find(i=>i.id===q.dataset.mq); it.qtd += +q.dataset.d; if(it.qtd<1) sacola=sacola.filter(i=>i!==it); else it.qtd=Math.min(20,it.qtd); mudouSacola(); }
+  if (q){ const it = sacola.find(i=>i.id===q.dataset.mq), est = VARS[it.id].v.estoque; it.qtd += +q.dataset.d; if(it.qtd<1) sacola=sacola.filter(i=>i!==it); else it.qtd=Math.min(est!=null?est:20, 20, it.qtd); mudouSacola(); }
 });
 $("#gCorpo").addEventListener("change", e=>{
   if (e.target.name === "frete"){ freteSel = fretes.find(f=>f.id===e.target.value); renderSacola(); }
@@ -485,7 +589,7 @@ async function pagar(){
       body:JSON.stringify({itens:sacola, cliente, freteId: freteSel.id})});
     const d = await r.json().catch(()=>({erro:"O pagamento ainda não está ativo neste endereço do site."}));
     if (!r.ok) throw new Error(d.erro || "Não foi possível abrir o pagamento.");
-    salvar("km_ultimo_pedido", {pedido:d.pedido, itens:sacola.map(i=>({...i, nome:PRODUTOS.find(p=>p.id===i.id).nome})), frete:d.frete, cliente, total: subtotal()+d.frete.preco});
+    salvar("km_ultimo_pedido", {pedido:d.pedido, itens:sacola.map(i=>({...i, nome:rotulo(VARS[i.id].p, VARS[i.id].v)})), frete:d.frete, cliente, total: subtotal()+d.frete.preco});
     location.href = d.url;
   }catch(err){ erro.textContent = err.message; btn.disabled = false; btn.textContent = "Ir para o pagamento"; }
 }
@@ -502,9 +606,9 @@ document.addEventListener("keydown", e=>{ if(e.key==="Escape") fechar(); });
 (function(){
   window.montarFaixa=()=>{
     const pr=fase().promo;
-    const avisos=[pr?"Oferta relâmpago: cabelo humanizado de R$ 169,90 por R$ 150":"Nova oferta relâmpago começa em instantes","Pague com Pix, cartão ou boleto","Enviamos para todo o Brasil","Atendimento pelo WhatsApp","Micromecha a partir de R$ 140"];
+    const avisos=[pr?"Oferta relâmpago: fibra humanizada de R$ 169,90 por R$ 149,90":"Nova oferta relâmpago começa em instantes","Pague com Pix, cartão ou boleto","Enviamos para todo o Brasil","Atendimento pelo WhatsApp","Micromecha a partir de R$ 140"];
     const t=avisos.map(a=>`<span>${a}</span>`).join(""); document.getElementById("faixa").innerHTML=t+t;
-    document.getElementById("b1preco").innerHTML = pr ? "De R$ 169,90 <em>por R$ 150</em>" : "Oferta relâmpago <em>volta já</em>";
+    document.getElementById("b1preco").innerHTML = pr ? "De R$ 169,90 <em>por R$ 149,90</em>" : "Oferta relâmpago <em>volta já</em>";
   };
   montarFaixa();
   const s=document.getElementById("slides"), n=s.children.length, b=document.getElementById("bolinhas");
@@ -514,7 +618,7 @@ document.addEventListener("keydown", e=>{ if(e.key==="Escape") fechar(); });
   s.addEventListener("scroll",()=>{const i=Math.round(s.scrollLeft/s.clientWidth);b.querySelectorAll("button").forEach((x,k)=>x.classList.toggle("on",k===i));});
   let tm; const reinicia=()=>{clearInterval(tm); if(!matchMedia("(prefers-reduced-motion: reduce)").matches) tm=setInterval(()=>ir((Math.round(s.scrollLeft/s.clientWidth)+1)%n),5000);};
   s.addEventListener("touchstart",reinicia,{passive:true}); reinicia();
-  s.addEventListener("click",e=>{const x=e.target.closest("[data-ir]"); if(!x) return; filtro=x.dataset.ir; montarFiltros(); vitrine(); document.getElementById("filtros").scrollIntoView({behavior:"smooth"});});
+  s.addEventListener("click",e=>{const x=e.target.closest("[data-ir]"); if(!x) return; filtro={cat:x.dataset.ir, sub:null}; montarFiltros(); vitrine(); document.getElementById("filtros").scrollIntoView({behavior:"smooth"});});
 })();
 
 /* Relógio da oferta */

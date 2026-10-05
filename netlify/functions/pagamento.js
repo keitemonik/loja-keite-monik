@@ -1,5 +1,6 @@
 // Cria o pagamento no Mercado Pago (Checkout Pro: Pix, cartão e boleto)
 const { cotar, validarItens, soDigitos } = require("../lib/frete");
+const { rpc } = require("../lib/banco");
 
 exports.handler = async (event) => {
   if (event.httpMethod !== "POST") return { statusCode: 405, body: "" };
@@ -8,7 +9,7 @@ exports.handler = async (event) => {
     if (!token) throw new Error("Chave do Mercado Pago não configurada no Netlify.");
 
     const { itens, cliente, freteId } = JSON.parse(event.body || "{}");
-    const lista = validarItens(itens);
+    const lista = await validarItens(itens);
     const c = cliente || {};
     for (const campo of ["nome", "email", "telefone", "cep", "rua", "numero", "bairro", "cidade", "uf"]) {
       if (!String(c[campo] || "").trim()) throw new Error("Preencha todos os dados de entrega.");
@@ -24,12 +25,12 @@ exports.handler = async (event) => {
     const fone = soDigitos(c.telefone);
 
     const itensMP = lista.map((i) => ({
-      id: i.id,
+      id: i.variante_id,
       title: i.nome,
       quantity: i.qtd,
       unit_price: i.preco,
       currency_id: "BRL",
-      picture_url: i.fotos[0] ? site + "/" + i.fotos[0] : undefined,
+      picture_url: i.fotos[0] ? (/^https?:/.test(i.fotos[0]) ? i.fotos[0] : site + "/" + i.fotos[0]) : undefined,
     }));
     itensMP.push({ id: "frete", title: "Frete – " + frete.nome, quantity: 1, unit_price: frete.preco, currency_id: "BRL" });
 
@@ -52,6 +53,7 @@ exports.handler = async (event) => {
           failure: site + "/obrigado.html?status=recusado&pedido=" + pedido,
         },
         auto_return: "approved",
+        notification_url: site + "/.netlify/functions/webhook-mp?pedido=" + pedido,
         metadata: {
           pedido,
           frete: frete.nome + " (" + frete.prazo + " dias úteis)",
@@ -62,6 +64,23 @@ exports.handler = async (event) => {
     });
     const dados = await resp.json();
     if (!resp.ok || !dados.init_point) throw new Error("Mercado Pago recusou o pedido: " + (dados.message || resp.status));
+
+    // Guarda o pedido no painel
+    const subtotal = lista.reduce((s, i) => s + i.preco * i.qtd, 0);
+    await rpc("loja_registrar_pedido", {
+      p_segredo: process.env.LOJA_SEGREDO,
+      p: {
+        codigo: pedido, cliente_nome: c.nome, cliente_email: c.email, cliente_telefone: c.telefone,
+        cep: c.cep, rua: c.rua, numero: String(c.numero), complemento: c.complemento || "",
+        bairro: c.bairro, cidade: c.cidade, uf: c.uf,
+        itens: lista.map((i) => ({
+          variante_id: i.variante_id, produto_id: i.produto_id, nome: i.nome, preco: i.preco, qtd: i.qtd,
+          peso_g: i.peso_g, tamanho: i.tamanho, tipo_crm: i.tipo_crm, textura: i.textura, foto: i.fotos[0] || "",
+        })),
+        subtotal, frete_nome: frete.nome, frete_valor: frete.preco, frete_prazo: frete.prazo,
+        total: Math.round((subtotal + frete.preco) * 100) / 100, mp_preference_id: dados.id,
+      },
+    }).catch((e) => { throw new Error("Não foi possível registrar o pedido agora. Tente de novo em instantes."); });
 
     return {
       statusCode: 200,

@@ -47,6 +47,9 @@ if (ped){
     ped.itens.map(i=>`• ${i.qtd}× ${i.nome}`).join("\n") +
     `\nFrete: ${ped.frete.nome}\nTotal: ${R$(ped.total)}\nNome: ${ped.cliente.nome}\nStatus: ${txt.t}`;
 }
+// confirma o pagamento no painel (o servidor confere direto no Mercado Pago)
+const pid = q.get("payment_id") || q.get("collection_id");
+if (pid && pid !== "null") fetch("/.netlify/functions/webhook-mp?payment_id=" + encodeURIComponent(pid)).catch(()=>{});
 if (status === "aprovado"){ try{ localStorage.removeItem("km_sacola") }catch{} }
 
 document.getElementById("box").innerHTML = `

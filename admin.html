@@ -1,0 +1,620 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Painel da Loja · Keite Monik</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600&family=Jost:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<style>
+  :root{
+    --bg:#F6F2EC; --card:#FFFFFF; --ink:#2A231F; --muted:#7A6E66; --line:#E8DFD3; --gold:#A9824B; --gold-soft:#F3EADC;
+    --ok:#2F6B4F; --ok-soft:#E3F0E8; --warn:#9A6A12; --warn-soft:#FBEFD6; --err:#A33B2E; --err-soft:#F7E2DE; --info:#2E5A88; --info-soft:#E1EBF6;
+    --serif:"Cormorant Garamond",Georgia,serif; --sans:"Jost",system-ui,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--ink);font:400 15px/1.45 var(--sans);min-height:100vh}
+  button,input,select,textarea{font:inherit;color:inherit}
+  button{cursor:pointer;border:0;background:none}
+  img{display:block;max-width:100%}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 16px}
+  [hidden]{display:none!important}
+  :focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+
+  /* Login */
+  .login{min-height:100vh;display:grid;place-items:center;padding:24px 16px}
+  .login form{width:min(380px,100%);background:var(--card);border:1px solid var(--line);border-radius:18px;padding:28px 22px;display:grid;gap:12px}
+  .login h1{font:600 30px/1 var(--serif);text-align:center}
+  .login p{color:var(--muted);text-align:center;font-size:14px;margin-bottom:6px}
+
+  input,select,textarea{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;background:var(--card);font-size:16px}
+  textarea{min-height:90px;resize:vertical}
+  label{display:grid;gap:5px;font-size:13px;font-weight:500;color:var(--muted)}
+  .btn{padding:11px 16px;border-radius:10px;background:var(--ink);color:#fff;font-weight:600;font-size:14.5px}
+  .btn:disabled{opacity:.5;cursor:not-allowed}
+  .btn2{padding:10px 14px;border-radius:10px;border:1px solid var(--line);background:var(--card);font-weight:500;font-size:14px}
+  .btn-ok{background:var(--ok)} .btn-err{background:var(--err)}
+  .erro{color:var(--err);font-size:13.5px}
+
+  /* Topo */
+  header{position:sticky;top:env(safe-area-inset-top,0px);z-index:10;background:rgba(246,242,236,.94);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+  .top{display:flex;align-items:center;justify-content:space-between;gap:12px;height:60px}
+  .marca{font:600 21px/1 var(--serif)}
+  .marca small{display:block;font:500 10px/1.6 var(--sans);letter-spacing:.24em;color:var(--gold);text-transform:uppercase}
+  .abas{display:flex;gap:4px;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:3px}
+  .abas button{padding:7px 14px;border-radius:999px;font-weight:500;font-size:14px}
+  .abas button[aria-selected="true"]{background:var(--ink);color:#fff}
+  .sair{font-size:13px;color:var(--muted);text-decoration:underline}
+
+  main{padding-block:18px 60px}
+  .resumo{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:16px}
+  @media(min-width:760px){.resumo{grid-template-columns:repeat(4,1fr)}}
+  .num{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px}
+  .num span{font-size:12.5px;color:var(--muted)}
+  .num b{display:block;font-size:22px;font-weight:600;font-variant-numeric:tabular-nums;margin-top:2px}
+  .num.destaque{border-color:var(--gold);background:var(--gold-soft)}
+
+  .barra{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+  .chips{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;flex:1;min-width:0}
+  .chips::-webkit-scrollbar{display:none}
+  .chip{flex:none;padding:7px 12px;border-radius:999px;border:1px solid var(--line);background:var(--card);font-size:13.5px}
+  .chip[aria-pressed="true"]{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .busca{flex:1 1 220px;max-width:320px}
+  @media(max-width:640px){.chips{flex-basis:100%} .busca{max-width:none}}
+
+  .lista{display:grid;gap:8px}
+  .linha{display:grid;grid-template-columns:1fr auto;gap:4px 12px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px;text-align:left;width:100%}
+  .linha:hover{border-color:var(--gold)}
+  .linha .t{font-weight:600;min-width:0}
+  .linha .s{color:var(--muted);font-size:13.5px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .linha .v{font-weight:600;font-variant-numeric:tabular-nums;text-align:right}
+  .pill{display:inline-block;padding:3px 9px;border-radius:999px;font-size:12px;font-weight:600;white-space:nowrap}
+  .st-aguardando_pagamento{background:var(--warn-soft);color:var(--warn)}
+  .st-pago{background:var(--gold-soft);color:#7A5A2B}
+  .st-separando{background:var(--info-soft);color:var(--info)}
+  .st-enviado{background:var(--info-soft);color:var(--info)}
+  .st-entregue{background:var(--ok-soft);color:var(--ok)}
+  .st-cancelado{background:var(--err-soft);color:var(--err)}
+  .vazio{text-align:center;color:var(--muted);padding:40px 10px;background:var(--card);border:1px dashed var(--line);border-radius:14px}
+  .vazio b{display:block;color:var(--ink);font:600 20px var(--serif);margin-bottom:4px}
+
+  /* Produtos */
+  .prod{display:grid;grid-template-columns:56px 1fr auto;gap:12px;align-items:center}
+  .prod .mini{width:56px;height:70px;border-radius:9px;overflow:hidden;background:var(--gold-soft);display:grid;place-items:center;font:600 14px var(--serif);color:#7A5A2B}
+  .prod .mini img{width:100%;height:100%;object-fit:cover}
+  .oculto{opacity:.55}
+
+  /* Painel lateral */
+  .fundo{position:fixed;inset:0;background:rgba(30,22,18,.45);z-index:40}
+  .gaveta{position:fixed;top:0;right:0;bottom:0;width:min(520px,100%);background:var(--bg);z-index:50;display:flex;flex-direction:column;box-shadow:-10px 0 40px rgba(0,0,0,.12)}
+  .g-topo{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 16px;padding-top:calc(14px + env(safe-area-inset-top,0px));border-bottom:1px solid var(--line)}
+  .g-topo h2{font:600 24px/1.1 var(--serif)}
+  .fechar{width:36px;height:36px;border-radius:50%;border:1px solid var(--line);background:var(--card);font-size:16px;flex:none}
+  .g-corpo{flex:1;overflow-y:auto;padding:16px;display:grid;gap:14px;align-content:start}
+  .g-base{padding:12px 16px calc(12px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--line);background:var(--card);display:flex;gap:8px;flex-wrap:wrap}
+  .bloco{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;display:grid;gap:8px}
+  .bloco h3{font:500 11px/1 var(--sans);letter-spacing:.2em;text-transform:uppercase;color:var(--gold)}
+  .kv{display:flex;justify-content:space-between;gap:12px;font-size:14px}
+  .kv span:first-child{color:var(--muted)}
+  .kv b{font-variant-numeric:tabular-nums}
+  .item{display:grid;grid-template-columns:44px 1fr auto;gap:10px;align-items:center;font-size:14px}
+  .item img,.item .ph{width:44px;height:54px;border-radius:7px;object-fit:cover;background:var(--gold-soft)}
+  .acoes{display:flex;gap:8px;flex-wrap:wrap}
+  .linkzap{color:var(--ok);font-weight:600;text-decoration:none}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .fotos{display:flex;gap:8px;flex-wrap:wrap}
+  .foto{position:relative;width:76px;height:96px;border-radius:9px;overflow:hidden;background:var(--gold-soft)}
+  .foto img{width:100%;height:100%;object-fit:cover}
+  .foto button{position:absolute;top:4px;right:4px;width:24px;height:24px;border-radius:50%;background:rgba(0,0,0,.6);color:#fff;font-size:12px}
+  .foto .capa{position:absolute;left:4px;bottom:4px;font-size:10px;background:var(--ink);color:#fff;padding:2px 5px;border-radius:4px}
+  .addfoto{width:76px;height:96px;border-radius:9px;border:1.5px dashed var(--gold);display:grid;place-items:center;text-align:center;font-size:12px;color:#7A5A2B;cursor:pointer}
+  .check{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--ink);font-weight:500}
+  .check input{width:18px;height:18px;accent-color:var(--gold)}
+  .ajuda{font-size:12.5px;color:var(--muted);font-weight:400}
+  .opchips{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+  .opchip{padding:8px 12px;border-radius:9px;border:1px solid var(--line);background:var(--card);font-weight:500;font-size:14px}
+  .opchip[aria-pressed="true"]{background:var(--ink);color:#fff;border-color:var(--ink)}
+  select{appearance:auto}
+  .confirma{background:var(--err-soft);border:1px solid var(--err);border-radius:12px;padding:12px;display:grid;gap:8px;font-size:14px}
+
+  .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translate(-50%,140%);visibility:hidden;background:var(--ink);color:#fff;padding:11px 18px;border-radius:999px;font-size:14px;z-index:60;transition:transform .25s;white-space:nowrap}
+  .toast.on{transform:translate(-50%,0);visibility:visible}
+</style>
+</head>
+<body>
+
+<section class="login" id="telaLogin" hidden>
+  <form id="formLogin">
+    <h1>Painel da Loja</h1>
+    <p>Entre com o mesmo e-mail e senha do CRM.</p>
+    <label>E-mail<input id="lEmail" type="email" autocomplete="email" required></label>
+    <label>Senha<input id="lSenha" type="password" autocomplete="current-password" required></label>
+    <button class="btn" id="lBtn">Entrar</button>
+    <span class="erro" id="lErro"></span>
+  </form>
+</section>
+
+<div id="app" hidden>
+  <header>
+    <div class="wrap top">
+      <div class="marca">Keite Monik<small>Painel da loja</small></div>
+      <nav class="abas" role="tablist">
+        <button role="tab" aria-selected="true" data-aba="pedidos">Pedidos</button>
+        <button role="tab" aria-selected="false" data-aba="produtos" id="abaProdutos">Produtos</button>
+      </nav>
+      <button class="sair" id="sair">Sair</button>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section id="secPedidos">
+      <div class="resumo" id="resumo"></div>
+      <div class="barra">
+        <div class="chips" id="filtros"></div>
+        <input class="busca" id="busca" placeholder="Buscar nome, pedido ou cidade">
+        <button class="btn2" id="atualizar">Atualizar</button>
+      </div>
+      <div class="lista" id="listaPedidos"></div>
+    </section>
+
+    <section id="secProdutos" hidden>
+      <div class="barra">
+        <div class="chips" id="contaProd"></div>
+        <button class="btn" id="novoProd">+ Novo produto</button>
+      </div>
+      <div class="lista" id="listaProdutos"></div>
+    </section>
+  </main>
+</div>
+
+<div class="fundo" id="fundo" hidden></div>
+<aside class="gaveta" id="gaveta" hidden role="dialog" aria-modal="true">
+  <div class="g-topo"><h2 id="gTitulo"></h2><button class="fechar" id="gFechar" aria-label="Fechar">✕</button></div>
+  <div class="g-corpo" id="gCorpo"></div>
+  <div class="g-base" id="gBase"></div>
+</aside>
+<div class="toast" id="toast"></div>
+
+<script>
+const SB_URL = "https://bdinijwgoajpiizxizhs.supabase.co";
+const SB_KEY = "sb_publishable_RU98YL-ArsSMYaasML9TLQ_zGmNkSzU";
+const sb = supabase.createClient(SB_URL, SB_KEY);
+
+const $ = s => document.querySelector(s);
+const R$ = v => Number(v||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
+const esc = s => String(s ?? "").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const dataHora = d => new Date(d).toLocaleString("pt-BR",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"});
+const soDig = s => String(s||"").replace(/\D/g,"");
+const STATUS = {
+  aguardando_pagamento:"Aguardando pagamento", pago:"Pago · a separar", separando:"Separando",
+  enviado:"Enviado", entregue:"Entregue", cancelado:"Cancelado"
+};
+let PEDIDOS = [], PRODUTOS = [], filtro = "abertos", ehAdmin = false;
+
+/* ---------- Login ---------- */
+async function iniciar(){
+  const { data:{ session } } = await sb.auth.getSession();
+  if (!session){ $("#telaLogin").hidden = false; $("#app").hidden = true; return; }
+  const { data: adm } = await sb.rpc("is_admin");
+  ehAdmin = !!adm;
+  $("#abaProdutos").hidden = !ehAdmin;
+  $("#telaLogin").hidden = true; $("#app").hidden = false;
+  carregarPedidos();
+  if (ehAdmin) carregarProdutos();
+}
+$("#formLogin").addEventListener("submit", async e=>{
+  e.preventDefault();
+  $("#lBtn").disabled = true; $("#lErro").textContent = "";
+  const { error } = await sb.auth.signInWithPassword({ email: $("#lEmail").value.trim(), password: $("#lSenha").value });
+  $("#lBtn").disabled = false;
+  if (error) { $("#lErro").textContent = "E-mail ou senha incorretos."; return; }
+  iniciar();
+});
+$("#sair").onclick = async ()=>{ await sb.auth.signOut(); location.reload(); };
+
+/* ---------- Abas ---------- */
+document.querySelector(".abas").addEventListener("click", e=>{
+  const b = e.target.closest("[data-aba]"); if(!b) return;
+  document.querySelectorAll("[data-aba]").forEach(x=>x.setAttribute("aria-selected", x===b));
+  $("#secPedidos").hidden = b.dataset.aba !== "pedidos";
+  $("#secProdutos").hidden = b.dataset.aba !== "produtos";
+});
+
+/* ---------- Pedidos ---------- */
+async function carregarPedidos(){
+  const { data, error } = await sb.from("loja_pedidos").select("*").order("criado_em",{ascending:false}).limit(500);
+  if (error){ $("#listaPedidos").innerHTML = `<div class="vazio"><b>Sem acesso aos pedidos</b>Sua conta não tem permissão. Peça para a administradora liberar.</div>`; return; }
+  PEDIDOS = data; resumo(); listarPedidos();
+}
+function resumo(){
+  const mes = new Date(); mes.setDate(1); mes.setHours(0,0,0,0);
+  const pagosMes = PEDIDOS.filter(p=>p.pago_em && new Date(p.pago_em)>=mes && p.status!=="cancelado");
+  const cont = s => PEDIDOS.filter(p=>s.includes(p.status)).length;
+  $("#resumo").innerHTML = `
+    <div class="num destaque"><span>Para enviar</span><b>${cont(["pago","separando"])}</b></div>
+    <div class="num"><span>Aguardando pagamento</span><b>${cont(["aguardando_pagamento"])}</b></div>
+    <div class="num"><span>Em trânsito</span><b>${cont(["enviado"])}</b></div>
+    <div class="num"><span>Vendido no mês</span><b>${R$(pagosMes.reduce((s,p)=>s+Number(p.subtotal),0))}</b></div>`;
+}
+const FILTROS = [["abertos","Para enviar"],["aguardando_pagamento","Aguardando pagamento"],["enviado","Enviados"],["entregue","Entregues"],["cancelado","Cancelados"],["todos","Todos"]];
+function listarPedidos(){
+  $("#filtros").innerHTML = FILTROS.map(([k,t])=>`<button class="chip" aria-pressed="${k===filtro}" data-f="${k}">${t}</button>`).join("");
+  const q = $("#busca").value.trim().toLowerCase();
+  const lista = PEDIDOS.filter(p=>{
+    if (filtro==="abertos" && !["pago","separando"].includes(p.status)) return false;
+    if (!["abertos","todos"].includes(filtro) && p.status!==filtro) return false;
+    return !q || [p.codigo,p.cliente_nome,p.cidade,p.cliente_telefone].join(" ").toLowerCase().includes(q);
+  });
+  $("#listaPedidos").innerHTML = lista.length ? lista.map(p=>`
+    <button class="linha" data-ped="${p.id}">
+      <span class="t">${esc(p.cliente_nome)} <span class="pill st-${p.status}">${STATUS[p.status]}</span></span>
+      <span class="v">${R$(p.total)}</span>
+      <span class="s">${esc(p.codigo)} · ${dataHora(p.criado_em)} · ${esc(p.cidade)}/${esc(p.uf)} · ${p.itens.map(i=>i.qtd+"× "+esc(i.nome)).join(", ")}</span>
+      <span class="s" style="text-align:right">${esc(p.frete_nome)}</span>
+    </button>`).join("")
+    : `<div class="vazio"><b>${filtro==="abertos"?"Nada para enviar agora":"Nenhum pedido aqui"}</b>${PEDIDOS.length?"Troque o filtro para ver outros pedidos.":"Os pedidos feitos na loja aparecem aqui assim que a cliente for para o pagamento."}</div>`;
+}
+$("#filtros").addEventListener("click", e=>{ const b=e.target.closest("[data-f]"); if(b){ filtro=b.dataset.f; listarPedidos(); } });
+$("#busca").addEventListener("input", listarPedidos);
+$("#atualizar").onclick = ()=>{ carregarPedidos(); toast("Lista atualizada"); };
+$("#listaPedidos").addEventListener("click", e=>{ const b=e.target.closest("[data-ped]"); if(b) abrirPedido(b.dataset.ped); });
+setInterval(()=>{ if(!$("#app").hidden && $("#gaveta").hidden) carregarPedidos(); }, 60000);
+
+function zap(p, texto){ let f = soDig(p.cliente_telefone); if (f.length<=11) f = "55"+f; return `https://wa.me/${f}?text=${encodeURIComponent(texto)}`; }
+function abrirPedido(id){
+  const p = PEDIDOS.find(x=>x.id===id); if(!p) return;
+  const primeiro = p.cliente_nome.split(" ")[0];
+  const endereco = `${p.cliente_nome}\n${p.rua}, ${p.numero}${p.complemento?" – "+p.complemento:""}\n${p.bairro} – ${p.cidade}/${p.uf}\nCEP ${p.cep}`;
+  const msgEnvio = `Oi, ${primeiro}! Seu pedido ${p.codigo} do Studio Keite Monik foi enviado 💛${p.rastreio?`\nCódigo de rastreio: ${p.rastreio}\nAcompanhe em: https://rastreamento.correios.com.br/app/index.php`:""}`;
+  const msgPago = `Oi, ${primeiro}! Recebemos o pagamento do seu pedido ${p.codigo} no Studio Keite Monik. Já estamos separando com carinho e te avisamos quando for enviado 💛`;
+  $("#gTitulo").innerHTML = `${esc(p.codigo)} <span class="pill st-${p.status}" style="vertical-align:middle">${STATUS[p.status]}</span>`;
+  $("#gCorpo").innerHTML = `
+    <div class="bloco"><h3>Itens</h3>
+      ${p.itens.map(i=>`<div class="item">${i.foto?`<img src="${esc(i.foto)}" alt="">`:`<span class="ph"></span>`}<span>${i.qtd}× ${esc(i.nome)}</span><b>${R$(i.preco*i.qtd)}</b></div>`).join("")}
+      <div class="kv"><span>Produtos</span><b>${R$(p.subtotal)}</b></div>
+      <div class="kv"><span>Frete · ${esc(p.frete_nome)}${p.frete_prazo?` (até ${p.frete_prazo} dias úteis)`:""}</span><b>${R$(p.frete_valor)}</b></div>
+      <div class="kv"><span>Total</span><b>${R$(p.total)}</b></div>
+    </div>
+    <div class="bloco"><h3>Cliente e entrega</h3>
+      <div style="white-space:pre-line;font-size:14.5px">${esc(endereco)}</div>
+      <div class="kv"><span>WhatsApp</span><a class="linkzap" target="_blank" rel="noopener" href="${zap(p,"Oi, "+primeiro+"! Aqui é do Studio Keite Monik, sobre o seu pedido "+p.codigo+".")}">${esc(p.cliente_telefone)}</a></div>
+      <div class="kv"><span>E-mail</span><span>${esc(p.cliente_email)}</span></div>
+      <div class="acoes"><button class="btn2" id="copiaEnd">Copiar endereço</button></div>
+    </div>
+    <div class="bloco"><h3>Pagamento</h3>
+      <div class="kv"><span>Pedido feito</span><span>${dataHora(p.criado_em)}</span></div>
+      <div class="kv"><span>Pago em</span><span>${p.pago_em?dataHora(p.pago_em):"—"}</span></div>
+      <div class="kv"><span>Forma</span><span>${esc(p.forma_pagamento||"—")}</span></div>
+      <div class="kv"><span>Nº no Mercado Pago</span><span>${esc(p.mp_payment_id||"—")}</span></div>
+      ${p.status==="aguardando_pagamento"?`<p class="ajuda">Se a cliente ainda não pagou, o pedido fica aqui. Quando o Mercado Pago aprovar, ele muda sozinho para "Pago".</p>`:""}
+    </div>
+    <div class="bloco"><h3>Envio</h3>
+      <label>Código de rastreio<input id="pRastreio" value="${esc(p.rastreio||"")}" placeholder="Ex.: AA123456789BR"></label>
+      <label>Observações internas<textarea id="pObs" placeholder="Anotações da equipe">${esc(p.observacoes)}</textarea></label>
+      <div class="acoes">
+        ${p.status!=="aguardando_pagamento"?`<a class="btn2 linkzap" target="_blank" rel="noopener" href="${zap(p,msgPago)}">Avisar pagamento recebido</a>`:""}
+        ${p.rastreio?`<a class="btn2 linkzap" target="_blank" rel="noopener" href="${zap(p,msgEnvio)}">Enviar rastreio no WhatsApp</a>`:""}
+      </div>
+    </div>
+    <div id="confirmaCancel"></div>`;
+  const prox = {pago:["separando","Marcar como separando"], separando:["enviado","Marcar como enviado"], enviado:["entregue","Marcar como entregue"]}[p.status];
+  $("#gBase").innerHTML = `
+    ${prox?`<button class="btn btn-ok" data-st="${prox[0]}">${prox[1]}</button>`:""}
+    <button class="btn2" id="salvarPed">Salvar rastreio e notas</button>
+    ${!["cancelado","entregue"].includes(p.status)?`<button class="btn2" id="cancelarPed" style="color:var(--err)">Cancelar pedido</button>`:""}`;
+  $("#copiaEnd").onclick = ()=> copiar(endereco);
+  $("#salvarPed").onclick = ()=> salvarPedido(p, {});
+  $("#gBase").querySelectorAll("[data-st]").forEach(b=> b.onclick = ()=>{
+    const st = b.dataset.st;
+    if (st==="enviado" && !$("#pRastreio").value.trim()){ toast("Coloque o código de rastreio antes"); $("#pRastreio").focus(); return; }
+    salvarPedido(p, {status: st, ...(st==="enviado"?{enviado_em:new Date().toISOString()}:{})});
+  });
+  const c = $("#cancelarPed");
+  if (c) c.onclick = ()=>{
+    $("#confirmaCancel").innerHTML = `<div class="confirma">Cancelar o pedido ${esc(p.codigo)}? Se já foi pago, faça o reembolso pelo Mercado Pago.
+      <div class="acoes"><button class="btn btn-err" id="simCancel">Sim, cancelar</button><button class="btn2" id="naoCancel">Voltar</button></div></div>`;
+    $("#simCancel").onclick = ()=> salvarPedido(p, {status:"cancelado"});
+    $("#naoCancel").onclick = ()=> $("#confirmaCancel").innerHTML = "";
+    $("#confirmaCancel").scrollIntoView({behavior:"smooth"});
+  };
+  abrirGaveta();
+}
+async function salvarPedido(p, extra){
+  const dados = { rastreio: $("#pRastreio").value.trim() || null, observacoes: $("#pObs").value.trim(), ...extra };
+  const { error } = await sb.from("loja_pedidos").update(dados).eq("id", p.id);
+  if (error) return toast("Não foi possível salvar: " + error.message);
+  Object.assign(p, dados); resumo(); listarPedidos(); abrirPedido(p.id); toast("Pedido salvo ✓");
+}
+
+/* ---------- Produtos ---------- */
+let CATS = [], filtroProd = "todos";
+const PESOS_PADRAO = [100, 150], TAMS_PADRAO = ["50/55cm", "60/65cm", "70/75cm"];
+const ordTam = t => parseInt(String(t||"").match(/\d+/)?.[0]||"0",10);
+const catDe = id => CATS.find(c=>c.id===id);
+function caminhoCat(id){ const c = catDe(id); if(!c) return "Sem categoria"; const pai = c.pai_id && catDe(c.pai_id); return pai ? `${pai.nome} › ${c.nome}` : c.nome; }
+function opcoesCat(atual){
+  const raizes = CATS.filter(c=>!c.pai_id);
+  return `<option value="">Escolha a categoria</option>` + raizes.map(r=>{
+    const subs = CATS.filter(c=>c.pai_id===r.id);
+    return `<option value="${esc(r.id)}" ${r.id===atual?"selected":""}>${esc(r.nome)}${r.ativo?"":" (oculta)"}</option>` +
+      subs.map(s=>`<option value="${esc(s.id)}" ${s.id===atual?"selected":""}>&nbsp;&nbsp;&nbsp;${esc(r.nome)} › ${esc(s.nome)}${s.ativo?"":" (oculta)"}</option>`).join("");
+  }).join("");
+}
+
+async function carregarProdutos(){
+  const [pr, ct] = await Promise.all([
+    sb.from("loja_produtos").select("*, loja_variantes(*)").order("ordem").order("nome"),
+    sb.from("loja_categorias").select("*").order("ordem").order("nome")
+  ]);
+  if (pr.error || ct.error) return;
+  CATS = ct.data;
+  PRODUTOS = pr.data.map(p=>({...p, variantes:(p.loja_variantes||[]).sort((a,b)=>(a.peso_g||0)-(b.peso_g||0)||ordTam(a.tamanho)-ordTam(b.tamanho))}))
+    .filter(p=>p.ativo || p.variantes.length); // esconde os antigos sem variação
+  listarProdutos();
+}
+function listarProdutos(){
+  const ativos = PRODUTOS.filter(p=>p.ativo).length;
+  $("#contaProd").innerHTML = `<button class="chip" aria-pressed="${filtroProd==="todos"}" data-fp="todos">Todos (${PRODUTOS.length})</button>` +
+    CATS.filter(c=>!c.pai_id).map(c=>{ const n = PRODUTOS.filter(p=>p.categoria_id===c.id || catDe(p.categoria_id)?.pai_id===c.id).length;
+      return `<button class="chip" aria-pressed="${filtroProd===c.id}" data-fp="${esc(c.id)}">${esc(c.nome)} (${n})</button>`; }).join("") +
+    `<button class="chip" data-cats="1">⚙ Categorias</button>`;
+  const lista = PRODUTOS.filter(p=> filtroProd==="todos" || p.categoria_id===filtroProd || catDe(p.categoria_id)?.pai_id===filtroProd);
+  $("#listaProdutos").innerHTML = lista.length ? lista.map(p=>{
+    const vs = p.variantes.filter(v=>v.ativo);
+    const min = vs.length ? Math.min(...vs.map(v=>+v.preco)) : null, max = vs.length ? Math.max(...vs.map(v=>+v.preco)) : null;
+    const esgot = vs.length && vs.every(v=>v.estoque===0);
+    return `<button class="linha prod ${p.ativo?"":"oculto"}" data-prod="${esc(p.id)}">
+      <span class="mini">${p.fotos[0]?`<img src="${esc(p.fotos[0])}" alt="">`:"—"}</span>
+      <span style="min-width:0"><span class="t" style="display:block">${esc(p.nome)}</span>
+        <span class="s" style="display:block">${esc(caminhoCat(p.categoria_id))} · ${vs.length} ${vs.length===1?"opção":"opções"}${esgot?" · esgotado":""}${p.ativo?"":" · oculto"}</span></span>
+      <span class="v">${min==null?"sem preço":min===max?R$(min):`${R$(min)}<br><span class="ajuda">até ${R$(max)}</span>`}</span>
+    </button>`; }).join("") : `<div class="vazio"><b>Nenhum produto aqui</b>Clique em "+ Novo produto" para cadastrar.</div>`;
+}
+$("#contaProd").addEventListener("click", e=>{
+  const b = e.target.closest("[data-fp]"); if (b){ filtroProd = b.dataset.fp; listarProdutos(); }
+  if (e.target.closest("[data-cats]")) abrirCategorias();
+});
+$("#listaProdutos").addEventListener("click", e=>{ const b=e.target.closest("[data-prod]"); if(b) abrirProduto(PRODUTOS.find(p=>p.id===b.dataset.prod)); });
+$("#novoProd").onclick = ()=> abrirProduto(null);
+
+/* Editor de produto com variações */
+let fotosEdit = [], pesosSel = [], tamsSel = [], varEdit = {};
+const chave = (g,t) => `${g||0}|${t||""}`;
+function abrirProduto(p){
+  const novo = !p;
+  p = p || {nome:"", categoria_id: filtroProd!=="todos" ? filtroProd : "", gramas:100, descricao:"", ativo:true, fotos:[], variantes:[], ordem:(PRODUTOS.at(-1)?.ordem||0)+1};
+  fotosEdit = [...p.fotos];
+  pesosSel = [...new Set(p.variantes.map(v=>v.peso_g).filter(Boolean))];
+  tamsSel = [...new Set(p.variantes.map(v=>v.tamanho).filter(Boolean))];
+  varEdit = {}; p.variantes.forEach(v=> varEdit[chave(v.peso_g, v.tamanho)] = {...v});
+  if (novo && /fibra|cabelo|mecha/i.test(caminhoCat(p.categoria_id))) pesosSel = [100];
+  $("#gTitulo").textContent = novo ? "Novo produto" : "Editar produto";
+  $("#gCorpo").innerHTML = `
+    <div class="bloco"><h3>Fotos</h3>
+      <div class="fotos" id="fotos"></div>
+      <span class="ajuda">A primeira foto é a capa. Use fotos em pé (formato de celular).</span>
+      <input type="file" id="fFile" accept="image/*" multiple hidden>
+    </div>
+    <div class="bloco"><h3>Informações</h3>
+      <label>Nome do produto<input id="fNome" value="${esc(p.nome)}" placeholder="Ex.: Castanho Iluminado"></label>
+      <label>Categoria<select id="fCat">${opcoesCat(p.categoria_id)}</select></label>
+      <label>Descrição<textarea id="fDesc">${esc(p.descricao)}</textarea></label>
+      <label class="check"><input type="checkbox" id="fAtivo" ${p.ativo?"checked":""}> Mostrar na loja</label>
+    </div>
+    <div class="bloco"><h3>Variações</h3>
+      <span class="ajuda">Marque os pesos e tamanhos que esse produto tem. Cada combinação ganha seu próprio preço e estoque. Para produtos sem variação (ex.: Misturinha), deixe tudo desmarcado.</span>
+      <div><b style="font-size:13px">Peso</b><div class="opchips" id="selPesos"></div></div>
+      <div><b style="font-size:13px">Tamanho</b><div class="opchips" id="selTams"></div></div>
+      <div id="semPeso" hidden><label>Peso para o frete (g)<input id="fGramas" inputmode="numeric" value="${p.gramas||100}"></label></div>
+      <div id="gradeVar" style="display:grid;gap:8px"></div>
+      <span class="ajuda">Preço riscado é opcional. Com ele, a variação entra na oferta relâmpago. Estoque vazio = não controlar.</span>
+    </div>
+    <span class="erro" id="fErro"></span>`;
+  $("#gBase").innerHTML = `<button class="btn" id="fSalvar">${novo?"Cadastrar produto":"Salvar alterações"}</button>`;
+  desenharFotos(); desenharOpcoes();
+  $("#fFile").onchange = e => enviarFotos([...e.target.files]);
+  $("#fSalvar").onclick = ()=> salvarProduto(novo, p);
+  abrirGaveta();
+}
+function guardarGrade(){
+  document.querySelectorAll("#gradeVar [data-k]").forEach(row=>{
+    const k = row.dataset.k, v = varEdit[k] || (varEdit[k] = {});
+    v._preco = row.querySelector("[data-c=preco]").value; v._de = row.querySelector("[data-c=de]").value;
+    v._est = row.querySelector("[data-c=est]").value; v._on = row.querySelector("[data-c=on]").checked;
+  });
+}
+function desenharOpcoes(){
+  const todosPesos = [...new Set([...PESOS_PADRAO, ...PRODUTOS.flatMap(p=>p.variantes.map(v=>v.peso_g)).filter(Boolean), ...pesosSel])].sort((a,b)=>a-b);
+  const todosTams = [...new Set([...TAMS_PADRAO, ...PRODUTOS.flatMap(p=>p.variantes.map(v=>v.tamanho)).filter(Boolean), ...tamsSel])].sort((a,b)=>ordTam(a)-ordTam(b));
+  $("#selPesos").innerHTML = todosPesos.map(g=>`<button class="opchip" data-peso="${g}" aria-pressed="${pesosSel.includes(g)}">${g}g</button>`).join("") + `<button class="opchip" data-novo="peso">+ outro</button>`;
+  $("#selTams").innerHTML = todosTams.map(t=>`<button class="opchip" data-tam="${esc(t)}" aria-pressed="${tamsSel.includes(t)}">${esc(t)}</button>`).join("") + `<button class="opchip" data-novo="tam">+ outro</button>`;
+  $("#semPeso").hidden = pesosSel.length>0;
+  const pes = pesosSel.length ? [...pesosSel].sort((a,b)=>a-b) : [null];
+  const tas = tamsSel.length ? [...tamsSel].sort((a,b)=>ordTam(a)-ordTam(b)) : [null];
+  const br = v => v==null||v==="" ? "" : String(v).includes(",") ? v : Number(v).toFixed(2).replace(".",",");
+  $("#gradeVar").innerHTML = pes.flatMap(g=>tas.map(t=>{
+    const k = chave(g,t);
+    if (!varEdit[k]) { // combinação nova: começa com o preço da variação mais parecida que já existia
+      const base = varEdit[chave(g,null)] || varEdit[chave(null,t)] || varEdit[chave(null,null)];
+      varEdit[k] = base ? { _preco: base._preco ?? br(base.preco), _de: base._de ?? br(base.preco_de) } : {};
+    }
+    const v = varEdit[k];
+    const nome = [g?g+"g":null, t].filter(Boolean).join(" · ") || "Preço único";
+    const on = v._on ?? (v.ativo ?? true);
+    return `<div data-k="${esc(k)}" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;padding:10px;border:1px solid var(--line);border-radius:10px;${on?"":"opacity:.55"}">
+      <label class="check" style="grid-column:1/-1;justify-content:space-between"><span>${esc(nome)}</span><span style="display:flex;gap:6px;align-items:center;font-weight:400;font-size:13px"><input type="checkbox" data-c="on" ${on?"checked":""}> à venda</span></label>
+      <label>Preço<input data-c="preco" inputmode="decimal" placeholder="0,00" value="${esc(v._preco ?? br(v.preco))}"></label>
+      <label>Riscado<input data-c="de" inputmode="decimal" placeholder="opcional" value="${esc(v._de ?? br(v.preco_de))}"></label>
+      <label>Estoque<input data-c="est" inputmode="numeric" placeholder="—" value="${esc(v._est ?? (v.estoque??""))}"></label>
+    </div>`;
+  })).join("");
+}
+document.addEventListener("click", e=>{
+  if ($("#gaveta").hidden || !$("#selPesos")) return;
+  const pz = e.target.closest("[data-peso]"), tz = e.target.closest("[data-tam]"), nz = e.target.closest("[data-novo]");
+  if (!pz && !tz && !nz) return;
+  guardarGrade();
+  if (pz){ const g=+pz.dataset.peso; pesosSel = pesosSel.includes(g) ? pesosSel.filter(x=>x!==g) : [...pesosSel, g]; }
+  if (tz){ const t=tz.dataset.tam; tamsSel = tamsSel.includes(t) ? tamsSel.filter(x=>x!==t) : [...tamsSel, t]; }
+  if (nz){
+    const alvo = nz.parentElement;
+    alvo.insertAdjacentHTML("beforeend", `<span style="display:flex;gap:6px;width:100%"><input id="novoValor" placeholder="${nz.dataset.novo==="peso"?"Ex.: 200 (em gramas)":"Ex.: 80/85cm"}"><button class="btn2" id="okValor">Incluir</button></span>`);
+    nz.remove(); $("#novoValor").focus();
+    $("#okValor").onclick = ()=>{
+      const val = $("#novoValor").value.trim(); if(!val) return;
+      if (nz.dataset.novo==="peso"){ const g = parseInt(val,10); if(g>0 && !pesosSel.includes(g)) pesosSel.push(g); }
+      else { const t = /cm$/i.test(val) ? val : val+"cm"; if(!tamsSel.includes(t)) tamsSel.push(t); }
+      guardarGrade(); desenharOpcoes();
+    };
+    return;
+  }
+  desenharOpcoes();
+});
+function desenharFotos(){
+  $("#fotos").innerHTML = fotosEdit.map((f,i)=>`<div class="foto"><img src="${esc(f)}" alt="">${i===0?`<span class="capa">capa</span>`:`<button data-capa="${i}" title="Usar como capa" style="right:auto;left:4px;top:auto;bottom:4px;width:auto;border-radius:4px;padding:0 5px;font-size:10px">capa</button>`}<button data-rm="${i}" aria-label="Remover foto">✕</button></div>`).join("")
+    + `<label class="addfoto" for="fFile">+ Adicionar<br>fotos</label>`;
+  $("#fotos").querySelectorAll("[data-rm]").forEach(b=> b.onclick = ()=>{ fotosEdit.splice(+b.dataset.rm,1); desenharFotos(); });
+  $("#fotos").querySelectorAll("[data-capa]").forEach(b=> b.onclick = ()=>{ const [f]=fotosEdit.splice(+b.dataset.capa,1); fotosEdit.unshift(f); desenharFotos(); });
+}
+function reduzir(arquivo){
+  return new Promise((ok, falha)=>{
+    const img = new Image(); img.onload = ()=>{
+      const max = 1400, k = Math.min(1, max/Math.max(img.width,img.height));
+      const c = document.createElement("canvas"); c.width = Math.round(img.width*k); c.height = Math.round(img.height*k);
+      c.getContext("2d").drawImage(img,0,0,c.width,c.height);
+      c.toBlob(b=> b?ok(b):falha(new Error("imagem")), "image/jpeg", .82);
+      URL.revokeObjectURL(img.src);
+    }; img.onerror = ()=>falha(new Error("Não consegui abrir essa imagem."));
+    img.src = URL.createObjectURL(arquivo);
+  });
+}
+async function enviarFotos(arquivos){
+  for (const a of arquivos){
+    toast("Enviando foto…");
+    try{
+      const blob = await reduzir(a);
+      const caminho = `produtos/${Date.now()}-${Math.random().toString(36).slice(2,7)}.jpg`;
+      const { error } = await sb.storage.from("loja-fotos").upload(caminho, blob, {contentType:"image/jpeg"});
+      if (error) throw error;
+      fotosEdit.push(sb.storage.from("loja-fotos").getPublicUrl(caminho).data.publicUrl);
+      desenharFotos();
+    }catch(e){ toast("Erro ao enviar foto: " + (e.message||e)); }
+  }
+  toast("Fotos adicionadas ✓"); $("#fFile").value = "";
+}
+const num = v => { const s = String(v??"").trim().replace(/\./g,"").replace(",","."); return s===""?null:Number(s); };
+function slug(t){ return t.normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,60); }
+async function salvarProduto(novo, p){
+  const erro = m => { $("#fErro").textContent = m; $("#fErro").scrollIntoView({behavior:"smooth", block:"center"}); };
+  guardarGrade();
+  const nome = $("#fNome").value.trim(), categoria_id = $("#fCat").value;
+  if (!nome) return erro("Coloque o nome do produto.");
+  if (!categoria_id) return erro("Escolha a categoria.");
+  const pes = pesosSel.length ? pesosSel : [null], tas = tamsSel.length ? tamsSel : [null];
+  const linhas = [];
+  for (const g of pes) for (const t of tas){
+    const k = chave(g,t), v = varEdit[k] || {}, rot = [g?g+"g":null, t].filter(Boolean).join(" · ") || "o produto";
+    const on = v._on ?? true, preco = num(v._preco ?? v.preco), de = num(v._de ?? v.preco_de), est = String(v._est ?? (v.estoque ?? "")).trim();
+    if (!on && !preco) { if (v.id) linhas.push({id:v.id, ativo:false}); continue; }
+    if (!preco || preco<=0) return erro(`Coloque o preço de ${rot} (ou desmarque "à venda").`);
+    if (de!=null && de<=preco) return erro(`Em ${rot}, o preço riscado precisa ser maior que o preço.`);
+    if (est!=="" && !(parseInt(est,10)>=0)) return erro(`Estoque de ${rot} precisa ser um número.`);
+    linhas.push({ ...(v.id?{id:v.id}:{}), peso_g:g, tamanho:t, preco, preco_de:de, estoque: est===""?null:parseInt(est,10), ativo:on, ordem:linhas.length+1 });
+  }
+  if (!linhas.some(l=>l.ativo!==false)) return erro("Deixe pelo menos uma opção à venda.");
+  const gramas = pesosSel.length ? Math.max(...pesosSel) : (parseInt($("#fGramas").value,10)||100);
+  const dados = { nome, categoria_id, categoria: caminhoCat(categoria_id), gramas, descricao: $("#fDesc").value.trim(), ativo: $("#fAtivo").checked, fotos: fotosEdit };
+  $("#fSalvar").disabled = true;
+  let id = p.id;
+  let res;
+  if (novo){
+    id = slug(nome) || "produto"; if (PRODUTOS.some(x=>x.id===id)) id += "-" + Date.now().toString(36).slice(-4);
+    res = await sb.from("loja_produtos").insert({ id, ordem: p.ordem, ...dados });
+  } else res = await sb.from("loja_produtos").update(dados).eq("id", id);
+  if (!res.error){
+    // variações que saíram da grade ficam desativadas (pedidos antigos continuam apontando para elas)
+    const manter = new Set(linhas.filter(l=>l.id).map(l=>l.id));
+    const sair = p.variantes.filter(v=>!manter.has(v.id)).map(v=>v.id);
+    if (sair.length) res = await sb.from("loja_variantes").update({ativo:false}).in("id", sair);
+  }
+  for (const l of linhas){
+    if (res.error) break;
+    res = l.id ? await sb.from("loja_variantes").update(l).eq("id", l.id)
+               : await sb.from("loja_variantes").insert({produto_id:id, ...l});
+  }
+  $("#fSalvar").disabled = false;
+  if (res.error) return erro("Não foi possível salvar: " + res.error.message);
+  fecharGaveta(); await carregarProdutos(); toast(novo ? "Produto cadastrado ✓ Já aparece na loja." : "Produto atualizado ✓");
+}
+
+/* Categorias */
+function abrirCategorias(){
+  const raizes = CATS.filter(c=>!c.pai_id);
+  const qtd = id => PRODUTOS.filter(p=>p.categoria_id===id).length;
+  const linha = (c, sub) => `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--line);${sub?"padding-left:22px":""}${c.ativo?"":";opacity:.55"}">
+      <span style="flex:1;min-width:0">${sub?"↳ ":""}<b style="font-weight:${sub?500:600}">${esc(c.nome)}</b> <span class="ajuda">${qtd(c.id)} produto(s)${c.ativo?"":" · oculta"}</span></span>
+      <button class="btn2" data-ren="${esc(c.id)}" style="padding:6px 10px">Renomear</button>
+      <button class="btn2" data-tog="${esc(c.id)}" style="padding:6px 10px">${c.ativo?"Ocultar":"Mostrar"}</button></div>`;
+  $("#gTitulo").textContent = "Categorias";
+  $("#gCorpo").innerHTML = `
+    <div class="bloco"><h3>Suas categorias</h3>
+      ${raizes.map(r=> linha(r,false) + CATS.filter(c=>c.pai_id===r.id).map(s=>linha(s,true)).join("")).join("")}
+    </div>
+    <div class="bloco"><h3>Nova categoria</h3>
+      <label>Nome<input id="cNome" placeholder="Ex.: Acessórios"></label>
+      <label>Fica dentro de<select id="cPai"><option value="">— É uma categoria principal —</option>${raizes.map(r=>`<option value="${esc(r.id)}">${esc(r.nome)} (vira subcategoria)</option>`).join("")}</select></label>
+      <label>Tipo (para o CRM)<select id="cTipo"><option value="fibra_humanizada">Fibra humanizada</option><option value="cabelo_humano">Cabelo humano</option><option value="outro">Outro produto</option></select></label>
+      <button class="btn" id="cCriar">Criar categoria</button>
+      <span class="erro" id="cErro"></span>
+    </div>
+    <div id="cRen"></div>`;
+  $("#gBase").innerHTML = `<button class="btn2" id="cVoltar">Voltar para os produtos</button>`;
+  $("#cVoltar").onclick = fecharGaveta;
+  $("#cPai").onchange = ()=>{ const r = catDe($("#cPai").value); if (r) $("#cTipo").value = r.tipo_crm; };
+  $("#cCriar").onclick = async ()=>{
+    const nome = $("#cNome").value.trim(), pai = $("#cPai").value || null;
+    if (!nome) return $("#cErro").textContent = "Coloque o nome da categoria.";
+    let id = (pai ? pai+"-" : "") + slug(nome); if (catDe(id)) id += "-" + Date.now().toString(36).slice(-3);
+    const tx = /liso/i.test(nome) ? "liso" : /ondul/i.test(nome) ? "ondulado" : /cache/i.test(nome) ? "cacheado" : null;
+    const { error } = await sb.from("loja_categorias").insert({ id, nome, pai_id: pai, tipo_crm: $("#cTipo").value, textura: tx,
+      ordem: CATS.filter(c=>c.pai_id===pai).length + 1 });
+    if (error) return $("#cErro").textContent = "Não foi possível criar: " + error.message;
+    await carregarProdutos(); abrirCategorias(); toast("Categoria criada ✓");
+  };
+  $("#gCorpo").querySelectorAll("[data-tog]").forEach(b=> b.onclick = async ()=>{
+    const c = catDe(b.dataset.tog);
+    const { error } = await sb.from("loja_categorias").update({ativo:!c.ativo}).eq("id", c.id);
+    if (error) return toast("Erro: " + error.message);
+    await carregarProdutos(); abrirCategorias(); toast(c.ativo ? "Categoria oculta da loja" : "Categoria visível na loja");
+  });
+  $("#gCorpo").querySelectorAll("[data-ren]").forEach(b=> b.onclick = ()=>{
+    const c = catDe(b.dataset.ren);
+    $("#cRen").innerHTML = `<div class="bloco"><h3>Renomear</h3><label>Novo nome<input id="rNome" value="${esc(c.nome)}"></label>
+      <div class="acoes"><button class="btn" id="rOk">Salvar nome</button><button class="btn2" id="rNao">Cancelar</button></div></div>`;
+    $("#rNome").focus(); $("#cRen").scrollIntoView({behavior:"smooth"});
+    $("#rNao").onclick = ()=> $("#cRen").innerHTML = "";
+    $("#rOk").onclick = async ()=>{
+      const nome = $("#rNome").value.trim(); if(!nome) return;
+      const { error } = await sb.from("loja_categorias").update({nome}).eq("id", c.id);
+      if (error) return toast("Erro: " + error.message);
+      await carregarProdutos(); abrirCategorias(); toast("Nome atualizado ✓");
+    };
+  });
+  abrirGaveta();
+}
+
+/* ---------- Utilidades ---------- */
+function abrirGaveta(){ $("#gaveta").hidden = false; $("#fundo").hidden = false; document.body.style.overflow="hidden"; $("#gCorpo").scrollTop = 0; }
+function fecharGaveta(){ $("#gaveta").hidden = true; $("#fundo").hidden = true; document.body.style.overflow=""; }
+$("#gFechar").onclick = fecharGaveta; $("#fundo").onclick = fecharGaveta;
+document.addEventListener("keydown", e=>{ if(e.key==="Escape") fecharGaveta(); });
+async function copiar(t){ try{ await navigator.clipboard.writeText(t); toast("Endereço copiado ✓"); }catch{ toast("Não consegui copiar"); } }
+let tt; function toast(t){ const el=$("#toast"); el.textContent=t; el.classList.add("on"); clearTimeout(tt); tt=setTimeout(()=>el.classList.remove("on"),2200); }
+
+iniciar();
+</script>
+</body>
+</html>

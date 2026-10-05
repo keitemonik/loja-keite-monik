@@ -4,7 +4,7 @@ exports.handler = async (event) => {
   if (event.httpMethod !== "POST") return { statusCode: 405, body: "" };
   try {
     const { cep, itens } = JSON.parse(event.body || "{}");
-    const opcoes = await cotar(cep, validarItens(itens));
+    const opcoes = await cotar(cep, await validarItens(itens));
     if (!opcoes.length) throw new Error("Nenhuma opção de entrega para esse CEP.");
     return json(200, { opcoes });
   } catch (e) {
