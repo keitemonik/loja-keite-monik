@@ -1,20 +1,12 @@
 // Cálculo de frete no SuperFrete (usado pelas funções frete e pagamento)
 const catalogo = require("../../produtos.json");
-const { variacoesAtivas } = require("./banco");
+const { variacoesAtivas, regrasDePreco } = require("./banco");
+const Precos = require("../../precos.js");
 
 const API = process.env.SUPERFRETE_SANDBOX === "true"
   ? "https://sandbox.superfrete.com/api/v0/calculator"
   : "https://api.superfrete.com/api/v0/calculator";
 
-// Oferta relâmpago: X horas no preço promocional, depois Y minutos no preço normal, e repete.
-function emPromocao(agora = Date.now()) {
-  const o = catalogo.loja.ofertaRelampago;
-  if (!o) return true;
-  const P = o.horasPromo * 3600e3, N = o.minutosNormal * 60e3, T = P + N;
-  const c = (((agora - Date.parse(o.inicio)) % T) + T) % T;
-  return c < P + (o.toleranciaMinutos || 0) * 60e3; // tolerância para quem estava pagando quando virou
-}
-function precoAtual(p) { return p.precoDe && !emPromocao() ? p.precoDe : p.preco; }
 
 function soDigitos(v) { return String(v || "").replace(/\D/g, ""); }
 
@@ -25,7 +17,9 @@ function rotulo(v) {
 // Confere os itens da sacola com o painel (o preço nunca vem do navegador)
 async function validarItens(itens) {
   if (!Array.isArray(itens) || !itens.length) throw new Error("Sacola vazia.");
-  const mapa = await variacoesAtivas(itens.map((i) => i.id));
+  const [mapa, regras] = await Promise.all([variacoesAtivas(itens.map((i) => i.id)), regrasDePreco()]);
+  // 5 min de tolerância para quem estava pagando quando a oferta/campanha virou
+  const ctx = Precos.contexto(regras.aparencia, regras.campanhas, Date.now(), 5);
   return itens.map((i) => {
     const v = mapa[i.id];
     const qtd = Math.max(1, Math.min(20, parseInt(i.qtd, 10) || 1));
@@ -34,7 +28,8 @@ async function validarItens(itens) {
     if (v.estoque != null && v.estoque < qtd) {
       throw new Error(v.estoque === 0 ? `${nome} esgotou.` : `Só temos ${v.estoque} unidade(s) de ${nome}.`);
     }
-    return { ...v, nome, preco: precoAtual(v), qtd };
+    const preco = Precos.precoInfo({ id: v.variante_id, preco: v.preco, precoDe: v.precoDe, categoria_id: v.categoria_id, pai_id: v.pai_id }, ctx).preco;
+    return { ...v, nome, preco, qtd };
   });
 }
 
@@ -88,4 +83,4 @@ async function cotar(cepDestino, itens) {
     .sort((a, b) => a.preco - b.preco);
 }
 
-module.exports = { precoAtual, emPromocao, cotar, validarItens, soDigitos, catalogo };
+module.exports = { cotar, validarItens, soDigitos, catalogo };

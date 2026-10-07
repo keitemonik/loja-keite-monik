@@ -7,8 +7,9 @@
 <meta name="description" content="Cabelo humanizado e micromecha de fibra humanizada do Studio Keite Monik. Pagamento por Pix ou cartão e entrega para todo o Brasil.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Jost:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Jost:wght@300;400;500;600&family=Allura&display=swap" rel="stylesheet">
 <style>
+  html{color-scheme:light}
   :root{
     --bg:#FBF8F3; --card:#FFFFFF; --ink:#2A231F; --muted:#7A6E66; --line:#ECE4DA;
     --gold:#A9824B; --gold-soft:#F3EADC; --ok:#2F6B4F; --err:#A33B2E;
@@ -23,9 +24,11 @@
   .wrap{max-width:1120px;margin:0 auto;padding:0 16px}
 
   /* Topo */
-  header{position:sticky;top:0;z-index:20;background:rgba(251,248,243,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+  header{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:rgba(251,248,243,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
   .top{display:flex;align-items:center;justify-content:space-between;height:64px}
   .marca{font:600 22px/1 var(--serif);letter-spacing:.02em}
+  [hidden]{display:none!important}
+  .marca .logo{height:52px;width:auto;display:block}
   .marca small{display:block;font:500 10px/1.6 var(--sans);letter-spacing:.28em;color:var(--gold);text-transform:uppercase}
   .btn-sacola{position:relative;display:flex;align-items:center;gap:8px;padding:10px 14px;border:1px solid var(--line);border-radius:999px;background:var(--card);font-weight:500}
   .btn-sacola svg{width:18px;height:18px}
@@ -43,17 +46,17 @@
 
   /* Faixa rodando */
   .faixa{background:var(--ink);color:#F3EADC;overflow:hidden;white-space:nowrap;font:500 12.5px/1 var(--sans);letter-spacing:.06em}
-  .faixa-trilho{display:inline-flex;gap:48px;padding:10px 0;animation:rolar 28s linear infinite}
+  .faixa-trilho{display:inline-flex;width:max-content;gap:48px;padding:10px 0;animation:rolar 28s linear infinite;will-change:transform}
   .faixa-trilho span::before{content:"✦";color:var(--gold);margin-right:12px}
   @keyframes rolar{from{transform:translateX(0)}to{transform:translateX(-50%)}}
-  @media (prefers-reduced-motion:reduce){.faixa-trilho{animation:none}}
 
   /* Banners */
   .banners{position:relative;margin:18px 0 6px;border-radius:18px;overflow:hidden}
   .slides{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;scroll-behavior:smooth}
   .slides::-webkit-scrollbar{display:none}
-  .slide{flex:none;width:100%;scroll-snap-align:start;position:relative;aspect-ratio:4/5;max-height:560px;color:#fff}
-  @media(min-width:720px){.slide{aspect-ratio:16/7}}
+  .slide{flex:none;width:100%;scroll-snap-align:start;position:relative;aspect-ratio:1/1;max-height:560px;color:#fff}
+  @media(min-width:720px){.slide{aspect-ratio:8/3;max-height:none}}
+  .slide.so-img{cursor:pointer}.slide.so-img::after{display:none}.slide.so-img img{object-position:center}
   .slide img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 30%}
   .slide::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(20,14,10,0) 35%,rgba(20,14,10,.78))}
   .slide-txt{position:absolute;left:0;right:0;bottom:0;z-index:1;padding:22px 20px 44px;max-width:560px}
@@ -63,7 +66,7 @@
   .slide-txt p{font-size:14.5px;opacity:.92;margin-bottom:14px}
   .slide-txt button{background:#fff;color:var(--ink);padding:11px 18px;border-radius:999px;font-weight:600;font-size:14px}
   .bolinhas{position:absolute;bottom:16px;left:20px;z-index:2;display:flex;gap:6px}
-  .bolinhas button{width:7px;height:7px;border-radius:999px;background:rgba(255,255,255,.5);transition:width .3s}
+  .bolinhas button{width:7px;height:7px;border-radius:999px;background:rgba(255,255,255,.5);transition:width .3s;box-shadow:0 0 0 1px rgba(60,40,25,.35)}
   .bolinhas button.on{width:22px;background:#fff}
 
 
@@ -120,6 +123,113 @@
   .add:active{transform:scale(.98)}
 
   /* Rodapé */
+
+  /* Autoridade */
+  .autor{margin:56px 0 8px;display:grid;gap:28px;align-items:center}
+  @media(min-width:820px){.autor{grid-template-columns:1fr 1.05fr;gap:64px;margin-top:80px}}
+  .autor-foto{position:relative;aspect-ratio:4/5;border-radius:18px;overflow:hidden;background:linear-gradient(160deg,#F3EADF,#E8DACB)}
+  .autor-foto img{width:100%;height:100%;object-fit:cover}
+  .autor-foto::after{content:"";position:absolute;inset:12px;border:1px solid rgba(255,255,255,.55);border-radius:12px;pointer-events:none}
+  .autor-vazia{position:absolute;inset:0;display:grid;place-content:center;justify-items:center;gap:10px;color:#9C8673;text-align:center;font-size:13.5px;padding:24px}
+  .autor-vazia svg{opacity:.7}
+  .autor-txt .kicker{font:500 11px/1 var(--sans);letter-spacing:.3em;text-transform:uppercase;color:var(--gold)}
+  .autor-txt h2{font:500 clamp(32px,6.4vw,50px)/1.05 var(--serif);margin:14px 0 16px;text-wrap:balance}
+  .autor-txt h2 em{font-style:normal;font-family:Allura,cursive;font-weight:400;color:var(--gold);font-size:1.25em;line-height:.8;display:inline-block;padding:0 .08em}
+  .autor-txt p{color:var(--muted);font-size:16px;line-height:1.7;max-width:520px}
+  .pilares{display:flex;flex-wrap:wrap;gap:6px 0;margin:22px 0 26px;font:500 11px/1 var(--sans);letter-spacing:.24em;text-transform:uppercase;color:var(--ink)}
+  .pilares span+span::before{content:"";display:inline-block;width:1px;height:10px;background:var(--gold);margin:0 14px;vertical-align:-1px;opacity:.7}
+  .assina{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+  .assina b{font:400 40px/1 Allura,cursive;color:var(--ink)}
+  .assina small{display:block;font:500 10.5px/1.5 var(--sans);letter-spacing:.22em;text-transform:uppercase;color:var(--muted)}
+  .link-zap{display:inline-flex;align-items:center;gap:8px;padding:12px 20px;border-radius:999px;border:1px solid var(--ink);font-weight:500;font-size:14px;color:var(--ink);text-decoration:none}
+  .link-zap:hover{background:var(--ink);color:#fff}
+  /* Faixa de confiança (rodapé) */
+  .confia{display:grid;grid-template-columns:repeat(2,max-content);justify-content:center;gap:12px 20px;margin:0 auto 22px;padding:0 16px;font:400 12px/1.2 var(--sans);letter-spacing:.03em;color:var(--muted)}
+  @media(max-width:719px){footer{padding-bottom:96px!important}.pilares{gap:10px 16px}.pilares span+span::before{display:none}}
+  @media(min-width:720px){.confia{display:flex;gap:0}.confia span+span::before{content:"·";margin:0 18px;color:var(--gold)}}
+  .confia span{display:inline-flex;align-items:center;gap:7px;white-space:nowrap}
+  .confia svg{flex:none;color:var(--gold)}
+  /* WhatsApp flutuante */
+  .zap{position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:35;width:54px;height:54px;border-radius:50%;display:grid;place-items:center;background:#25D366;color:#fff;box-shadow:0 8px 24px rgba(0,0,0,.22);transition:transform .2s}
+  .zap:hover{transform:scale(1.06)}
+  .compra{max-width:min(360px,calc(100% - 100px))!important}
+
+  /* Menu lateral */
+  .top-esq{display:flex;align-items:center;gap:6px}
+  .btn-menu{width:42px;height:42px;margin-left:-8px;border-radius:50%;display:grid;place-items:center}
+  .btn-menu:hover{background:var(--card)}
+  a.marca{color:inherit;text-decoration:none}
+  .menu-lat{top:0;left:0;bottom:0;width:min(340px,86%);transform:translateX(-100%);overflow-y:auto}
+  .menu-lat.on{transform:none}
+  .menu-lat .p-topo{border-bottom:1px solid var(--line)}
+  .menu-lat nav{padding:8px 0 4px}
+  .menu-lat h6{font:500 10.5px/1 var(--sans);letter-spacing:.26em;text-transform:uppercase;color:var(--gold);padding:18px 22px 8px}
+  .menu-lat a{display:flex;align-items:center;justify-content:space-between;padding:13px 22px;color:var(--ink);text-decoration:none;font-size:15.5px}
+  .menu-lat a:hover,.menu-lat a[aria-current="page"]{background:var(--card)}
+  .menu-lat a[aria-current="page"]{box-shadow:inset 3px 0 0 var(--gold)}
+  .menu-lat a::after{content:"›";color:var(--muted);font-size:18px}
+  .menu-lat .m-redes{display:flex;gap:10px;padding:18px 22px 6px}
+  .menu-lat .m-redes a{flex:1;justify-content:center;gap:8px;border:1px solid var(--line);border-radius:999px;padding:11px 10px;font-size:14px;background:var(--card)}
+  .menu-lat .m-redes a::after{display:none}
+  .menu-lat .m-cnpj{padding:14px 22px 26px;font-size:12px;color:var(--muted);line-height:1.6}
+  /* Páginas institucionais */
+  body.em-pagina main>:not(#pagina){display:none!important}
+  .pagina{padding:28px 0 56px}
+  .pg-grid{display:grid;gap:22px}
+  @media(min-width:860px){.pg-grid{grid-template-columns:230px 1fr;gap:56px;align-items:start}}
+  .pg-lado{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;margin:0 -16px;padding:0 16px}
+  .pg-lado::-webkit-scrollbar{display:none}
+  .pg-lado a{flex:none;padding:9px 14px;border:1px solid var(--line);border-radius:999px;background:var(--card);color:var(--ink);text-decoration:none;font-size:13.5px;white-space:nowrap}
+  .pg-lado a[aria-current="page"]{background:var(--ink);border-color:var(--ink);color:#fff}
+  @media(min-width:860px){.pg-lado{position:sticky;top:96px;flex-direction:column;gap:0;margin:0;padding:0;border-left:1px solid var(--line)}
+    .pg-lado a{border:0;border-radius:0;background:none;padding:10px 0 10px 18px;margin-left:-1px;border-left:2px solid transparent;color:var(--muted);font-size:14.5px}
+    .pg-lado a:hover{color:var(--ink)}
+    .pg-lado a[aria-current="page"]{background:none;color:var(--ink);border-left-color:var(--gold);font-weight:500}}
+  .voltar{display:flex;width:max-content;align-items:center;gap:6px;font-size:13.5px;color:var(--muted);text-decoration:none;margin-bottom:14px}
+  .voltar:hover{color:var(--ink)}
+  .pg-txt{max-width:720px}
+  .pg-txt .kicker{font:500 11px/1 var(--sans);letter-spacing:.3em;text-transform:uppercase;color:var(--gold)}
+  .pg-txt h1{font:500 clamp(34px,6.5vw,52px)/1.05 var(--serif);margin:12px 0 16px;text-wrap:balance}
+  .pg-txt h1 em,.conheca h2 em{font-style:normal;font-family:Allura,cursive;font-weight:400;color:var(--gold);font-size:1.25em;line-height:.8;display:inline-block;padding:0 .06em}
+  .pg-txt .lead{font-size:17px;line-height:1.7;color:var(--muted)}
+  .pg-txt h2{font:600 26px/1.15 var(--serif);margin:36px 0 10px}
+  .pg-txt h3{font:600 19px/1.2 var(--serif);margin:22px 0 6px}
+  .pg-txt p,.pg-txt li{font-size:15.5px;line-height:1.75;color:#4A403A}
+  .pg-txt p+p{margin-top:10px}
+  .pg-txt ul,.pg-txt ol{padding-left:20px;margin:8px 0}
+  .pg-txt li+li{margin-top:4px}
+  .pg-txt a{color:var(--ink)}
+  .pg-txt .nota{margin-top:28px;padding:16px 18px;border-radius:12px;background:var(--card);border:1px solid var(--line);font-size:14px;color:var(--muted)}
+  .pg-txt .cx{margin:18px 0;padding:18px 20px;border-radius:14px;background:#F4ECE1}
+  .pg-txt .cx b{color:var(--ink)}
+  .passos{counter-reset:p;list-style:none;padding:0!important}
+  .passos li{counter-increment:p;position:relative;padding-left:44px;min-height:32px;margin-top:12px!important}
+  .passos li::before{content:counter(p);position:absolute;left:0;top:0;width:30px;height:30px;border-radius:50%;background:var(--ink);color:#fff;display:grid;place-items:center;font:600 13px/1 var(--sans)}
+  .faq details{border-bottom:1px solid var(--line)}
+  .faq summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;gap:16px;padding:16px 0;font:600 18px/1.3 var(--serif);color:var(--ink)}
+  .faq summary::-webkit-details-marker{display:none}
+  .faq summary::after{content:"+";font:300 24px/1 var(--sans);color:var(--gold);transition:transform .2s}
+  .faq details[open] summary::after{transform:rotate(45deg)}
+  .faq details>div{padding:0 0 18px}
+  .numeros{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:26px 0 8px}
+  .numeros div{padding:16px 10px;border-radius:14px;background:var(--card);border:1px solid var(--line);text-align:center}
+  .numeros b{display:block;font:600 26px/1 var(--serif);color:var(--ink)}
+  .numeros span{display:block;margin-top:6px;font-size:12px;line-height:1.35;color:var(--muted)}
+  .sobre-topo{display:grid;gap:26px;align-items:center}
+  @media(min-width:720px){.sobre-topo{grid-template-columns:.85fr 1fr;gap:40px}}
+  .botoes{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}
+  .btn-esc{display:inline-flex;align-items:center;gap:8px;padding:13px 22px;border-radius:999px;background:var(--ink);color:#fff!important;text-decoration:none;font-weight:500;font-size:14.5px}
+  /* Bloco "Conheça a Keite" na página inicial */
+  .conheca{margin:56px 0 8px;padding:28px 24px;border-radius:20px;background:linear-gradient(135deg,#F4ECE1,#EFE3D3);display:grid;gap:18px;align-items:center}
+  @media(min-width:760px){.conheca{grid-template-columns:auto 1fr auto;gap:32px;padding:32px 40px}}
+  .conheca .selo{width:84px;height:84px;border-radius:50%;background:#fff url(img/logo.png) center/78% no-repeat;box-shadow:0 0 0 1px var(--line),0 6px 18px rgba(60,40,25,.08)}
+  .conheca small{font:500 10.5px/1 var(--sans);letter-spacing:.28em;text-transform:uppercase;color:var(--gold)}
+  .conheca h2{font:500 clamp(26px,4.4vw,36px)/1.08 var(--serif);margin:8px 0 6px;text-wrap:balance}
+  .conheca p{color:var(--muted);font-size:15px}
+  /* Rodapé: links */
+  .rod-links{display:flex;flex-wrap:wrap;justify-content:center;gap:8px 20px;margin:0 auto 18px;padding:0 16px;font-size:13.5px}
+  .rod-links a{color:var(--ink);text-decoration:none;border-bottom:1px solid var(--line)}
+  .rod-links a:hover{border-color:var(--gold)}
   footer{border-top:1px solid var(--line);padding:28px 0 40px;text-align:center;color:var(--muted);font-size:13.5px}
   footer a{color:var(--ink)}
 
@@ -202,10 +312,17 @@
 </head>
 <body>
 
+
+<script src="precos.js"></script>
 <div class="faixa" aria-label="Avisos da loja"><div class="faixa-trilho" id="faixa"></div></div>
 <header>
   <div class="wrap top">
-    <div class="marca">Keite Monik<small>Studio · Loja</small></div>
+    <div class="top-esq">
+      <button class="btn-menu" id="abrirMenu" aria-label="Abrir menu" aria-controls="menuLat">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h10"/></svg>
+      </button>
+      <a class="marca" href="#" aria-label="Página inicial da loja">Keite Monik<small>Studio · Loja</small></a>
+    </div>
     <button class="btn-sacola" id="abrirSacola" aria-label="Abrir sacola">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 8h14l-1.2 12H6.2L5 8Z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg>
       Sacola <span class="badge" id="qtdSacola">0</span>
@@ -232,16 +349,42 @@
   <nav class="filtros" id="filtros" aria-label="Categorias"></nav>
   <nav class="filtros" id="subfiltros" aria-label="Subcategorias" style="padding-top:0;margin-top:-6px" hidden></nav>
   <section class="grade" id="grade" aria-live="polite"></section>
+  <section class="conheca" aria-label="Sobre a Keite">
+    <div class="selo" aria-hidden="true"></div>
+    <div><small>Mais de 10 anos na beleza</small>
+      <h2>Compre seu cabelo com quem <em>entende</em> de Mega Hair</h2>
+      <p>Especialista em Mega Hair de fibra humanizada e micromechas em NanoPele, técnica própria.</p></div>
+    <a class="btn-esc" href="#sobre">Conheça a Keite <span aria-hidden="true">→</span></a>
+  </section>
+  <section class="pagina" id="pagina" hidden></section>
 </main>
 
 <footer>
+  <div class="confia" aria-label="Compra segura">
+    <span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>Compra protegida</span>
+    <span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7h11v9H3zM14 10h4l3 3v3h-7z"/><circle cx="7" cy="17.5" r="1.6"/><circle cx="17" cy="17.5" r="1.6"/></svg>Envio para todo o Brasil</span>
+    <span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 0 1-11.6 7.1L4 20l1-4.2A8 8 0 1 1 20 12z"/></svg>Atendimento especializado</span>
+    <span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/></svg>Produtos selecionados</span>
+  </div>
+  <nav class="rod-links" aria-label="Informações">
+    <a href="#sobre">Sobre a Keite</a><a href="#faq">Perguntas frequentes</a><a href="#trocas">Trocas e devoluções</a><a href="#garantia">Garantia</a><a href="#privacidade">Privacidade</a>
+  </nav>
   <div class="wrap">
     Dúvidas? Fale com a gente no <a id="linkZap" target="_blank" rel="noopener">WhatsApp</a> ou no <a id="linkInsta" target="_blank" rel="noopener">Instagram</a>.<br>
-    Studio Keite Monik · Ribeirão das Neves – MG
+    Studio Keite Monik · CNPJ 58.868.387/0001-82 · Ribeirão das Neves – MG
   </div>
 </footer>
 
 <div class="fundo" id="fundo"></div>
+
+<!-- Menu lateral -->
+<aside class="painel menu-lat" id="menuLat" role="dialog" aria-modal="true" aria-label="Menu">
+  <div class="p-topo"><h2>Menu</h2><button class="fechar" data-fechar aria-label="Fechar">✕</button></div>
+  <nav aria-label="Loja"><h6>Loja</h6><div id="menuCats"></div></nav>
+  <nav aria-label="Atendimento"><h6>Atendimento</h6><div id="menuInfo"></div></nav>
+  <div class="m-redes"><a class="js-zap" target="_blank" rel="noopener">WhatsApp</a><a id="menuInsta" target="_blank" rel="noopener">Instagram</a></div>
+  <div class="m-cnpj">Studio Keite Monik<br>CNPJ 58.868.387/0001-82<br>Ribeirão das Neves – MG</div>
+</aside>
 
 <!-- Detalhe do produto -->
 <aside class="painel modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="mNome">
@@ -257,11 +400,15 @@
 </aside>
 
 <div class="toast" id="toast"></div>
+<a class="zap js-zap" id="zapFlutua" target="_blank" rel="noopener" aria-label="Falar no WhatsApp">
+  <svg width="27" height="27" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 0 0-7.8 13.5L3 21l4.6-1.2A9 9 0 1 0 12 3z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M9.1 7.9c.3-.4.7-.4 1-.2l1 2c.1.3 0 .6-.2.8l-.5.5c.5 1.1 1.4 2 2.6 2.6l.5-.5c.2-.2.5-.3.8-.2l2 1c.3.2.3.6.1 1-.5.8-1.4 1.2-2.3 1-2.6-.6-4.6-2.6-5.2-5.2-.1-.7.1-1.3.5-1.8z" fill="currentColor"/></svg>
+</a>
 <div class="compra" id="compra" role="status" aria-live="polite">
   <span class="bolsa"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M5 8h14l-1.2 12H6.2L5 8Z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg></span>
   <p id="compraTxt"></p>
   <button class="x" id="compraX" aria-label="Fechar aviso">✕</button>
 </div>
+
 
 <script>
 const R$ = v => v.toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
@@ -269,17 +416,17 @@ const $ = s => document.querySelector(s);
 const esc = s => String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 
 let LOJA, PRODUTOS = [], CATS = [], VARS = {}, filtro = {cat:"todos", sub:null};
+let AP = null, CAMPS = [], BANNERS = null, CTX = {campanha:null, relampago:null};
 
-/* Oferta relâmpago (mesma regra do servidor) */
-function fase(){
-  const o = LOJA && LOJA.ofertaRelampago;
-  if (!o) return {promo:true, resta:0};
-  const P=o.horasPromo*3600e3, N=o.minutosNormal*60e3, T=P+N;
-  const c=(((Date.now()-Date.parse(o.inicio))%T)+T)%T;
-  return c<P ? {promo:true, resta:P-c} : {promo:false, resta:T-c};
+/* Preços: mesma regra do servidor (precos.js) — campanha > oferta relâmpago > normal */
+function atualizarCtx(){ CTX = Precos.contexto(AP, CAMPS, Date.now(), 0); return CTX; }
+function pinfo(v){
+  const ref = VARS[v.id], c = ref && cat(ref.p.categoria_id);
+  return Precos.precoInfo({id:v.id, preco:v.preco, precoDe:v.precoDe, categoria_id:c?c.id:null, pai_id:c?c.pai_id:null}, CTX);
 }
-function preco(v){ return (v.precoDe && !fase().promo) ? v.precoDe : v.preco; }
+function preco(v){ return pinfo(v).preco; }
 function hms(ms){ const s=Math.max(0,Math.floor(ms/1000)); return [Math.floor(s/3600),Math.floor(s/60)%60,s%60].map(n=>String(n).padStart(2,"0")); }
+function dhms(ms){ const d=Math.floor(Math.max(0,ms)/864e5), [h,m,s]=hms(ms-d*864e5); return {d,h,m,s}; }
 let sacola = ler("km_sacola2", []);
 let fretes = [], freteSel = null, cepCotado = "";
 let etapa = "sacola"; // sacola | dados
@@ -310,13 +457,29 @@ function deJson(d){ // reserva: catálogo antigo, só para exibir se o painel n�
   return d.produtos.map(p=>({ id:p.id, nome:p.nome, categoria_id:null, fotos:p.fotos, descricao:p.descricao, gramas:p.gramas,
     variantes:[{id:p.id, peso_g:p.gramas, tamanho:null, preco:p.preco, precoDe:p.precoDe, estoque:null}] }));
 }
-Promise.all([fetch("produtos.json").then(r=>r.json()), catalogoDoPainel().catch(()=>null)]).then(([d, painel])=>{
-  LOJA = d.loja;
+async function regrasDoPainel(){
+  const [ap, camps, precos, banners] = await Promise.all([
+    sbGet("loja_aparencia?select=*&limit=1"), sbGet("loja_campanhas?select=*"),
+    sbGet("loja_campanha_precos?select=*"), sbGet("loja_banners?select=*&order=ordem.asc")]);
+  camps.forEach(c=>{ c.desconto_pct = c.desconto_pct==null?null:+c.desconto_pct; c.precos = {};
+    precos.filter(x=>x.campanha_id===c.id).forEach(x=>c.precos[x.variante_id]=+x.preco); });
+  return {ap: ap[0]||null, camps, banners};
+}
+function aplicarRegras(r){
+  if (r){ AP = r.ap; CAMPS = r.camps; BANNERS = r.banners; }
+  if (!AP && LOJA){ const o = LOJA.ofertaRelampago; AP = {oferta_ativa:true, oferta_inicio:o.inicio, oferta_horas:o.horasPromo, oferta_minutos:o.minutosNormal, faixa_avisos:[]}; }
+  atualizarCtx();
+}
+setInterval(()=>regrasDoPainel().then(r=>{ aplicarRegras(r); estadoAnterior="recarregar"; tique(); }).catch(()=>{}), 5*60e3);
+
+Promise.all([fetch("produtos.json").then(r=>r.json()), catalogoDoPainel().catch(()=>null), regrasDoPainel().catch(()=>null)]).then(([d, painel, regras])=>{
+  LOJA = d.loja; aplicarRegras(regras);
   PRODUTOS = painel ? painel.lista : deJson(d);
   CATS = painel ? painel.cats : [];
   VARS = {};
   PRODUTOS.forEach(p=>p.variantes.forEach(v=>VARS[v.id] = {v, p}));
   $("#linkZap").href = "https://wa.me/" + LOJA.whatsapp;
+  document.querySelectorAll(".js-zap").forEach(a=>a.href="https://wa.me/"+LOJA.whatsapp+"?text="+encodeURIComponent("Olá, Keite! Vim pela loja e quero tirar uma dúvida."));
   $("#linkInsta").href = "https://instagram.com/" + LOJA.instagram;
   sacola = sacola.filter(i => VARS[i.id]);
   montarFiltros(); vitrine(); contador(); tique();
@@ -337,8 +500,9 @@ function foto(p, cls=""){
   return `<div class="sem-foto ${cls}"><div><b>${g}</b><span>${esc(r?r.nome:"")}</span></div></div>`;
 }
 function precoHTML(v, aPartir){
-  const promo = v.precoDe && fase().promo;
-  return `<div class="precos">${aPartir?`<span class="de" style="text-decoration:none">a partir de</span>`:""}${promo?`<span class="de">${R$(v.precoDe)}</span>`:""}<span class="por">${R$(preco(v))}</span></div>${v.precoDe?`<span class="timer" data-timer></span>`:""}`;
+  const i = pinfo(v);
+  const temTimer = (CTX.campanha && i.de && CTX.campanha.contador) || (!CTX.campanha && CTX.relampago && v.precoDe!=null);
+  return `<div class="precos">${aPartir?`<span class="de" style="text-decoration:none">a partir de</span>`:""}${i.de?`<span class="de">${R$(i.de)}</span>`:""}<span class="por">${R$(i.preco)}</span></div>${temTimer?`<span class="timer" data-timer></span>`:""}`;
 }
 function maisBarata(p){
   const vs = p.variantes.filter(disponivel); const base = vs.length ? vs : p.variantes;
@@ -373,7 +537,7 @@ function vitrine(){
   $("#grade").innerHTML = lista.length ? lista.map(p=>{
     const v = maisBarata(p), varia = p.variantes.length>1, esgotado = !p.variantes.some(disponivel);
     const aPartir = varia && new Set(p.variantes.map(preco)).size>1;
-    const off = v.precoDe && fase().promo ? Math.round((1 - v.preco/v.precoDe)*100) : 0;
+    const iv = pinfo(v), off = iv.de ? Math.round((1 - iv.preco/iv.de)*100) : 0;
     return `<article class="card">
       <button class="foto" data-ver="${esc(p.id)}" aria-label="Ver ${esc(p.nome)}">${foto(p)}${off?`<span class="tag">-${off}%</span>`:""}</button>
       <div class="info">
@@ -602,42 +766,74 @@ document.addEventListener("click", e=>{ if(e.target.closest("[data-fechar]")) fe
 document.addEventListener("keydown", e=>{ if(e.key==="Escape") fechar(); });
 
 
-/* Faixa e banners */
-(function(){
-  window.montarFaixa=()=>{
-    const pr=fase().promo;
-    const avisos=[pr?"Oferta relâmpago: fibra humanizada de R$ 169,90 por R$ 149,90":"Nova oferta relâmpago começa em instantes","Pague com Pix, cartão ou boleto","Enviamos para todo o Brasil","Atendimento pelo WhatsApp","Micromecha a partir de R$ 140"];
-    const t=avisos.map(a=>`<span>${a}</span>`).join(""); document.getElementById("faixa").innerHTML=t+t;
-    document.getElementById("b1preco").innerHTML = pr ? "De R$ 169,90 <em>por R$ 149,90</em>" : "Oferta relâmpago <em>volta já</em>";
-  };
-  montarFaixa();
-  const s=document.getElementById("slides"), n=s.children.length, b=document.getElementById("bolinhas");
-  b.innerHTML=Array.from({length:n},(_,i)=>`<button aria-label="Banner ${i+1}" class="${i?"":"on"}"></button>`).join("");
-  const ir=i=>s.scrollTo({left:i*s.clientWidth});
-  b.querySelectorAll("button").forEach((x,i)=>x.onclick=()=>{ir(i);reinicia();});
-  s.addEventListener("scroll",()=>{const i=Math.round(s.scrollLeft/s.clientWidth);b.querySelectorAll("button").forEach((x,k)=>x.classList.toggle("on",k===i));});
-  let tm; const reinicia=()=>{clearInterval(tm); if(!matchMedia("(prefers-reduced-motion: reduce)").matches) tm=setInterval(()=>ir((Math.round(s.scrollLeft/s.clientWidth)+1)%n),5000);};
-  s.addEventListener("touchstart",reinicia,{passive:true}); reinicia();
-  s.addEventListener("click",e=>{const x=e.target.closest("[data-ir]"); if(!x) return; filtro={cat:x.dataset.ir, sub:null}; montarFiltros(); vitrine(); document.getElementById("filtros").scrollIntoView({behavior:"smooth"});});
-})();
+/* Faixa, banners, cores e logo (vêm do painel; campanha no ar tem prioridade) */
+function montarFaixa(){
+  const c = CTX.campanha;
+  let avisos = (c && c.faixa_avisos && c.faixa_avisos.length) ? c.faixa_avisos : ((AP && AP.faixa_avisos && AP.faixa_avisos.length) ? AP.faixa_avisos : null);
+  if (!avisos) avisos = ["Pague com Pix, cartão ou boleto","Enviamos para todo o Brasil","Atendimento pelo WhatsApp"];
+  const t = avisos.map(a=>`<span>${esc(a)}</span>`).join(""), f = $("#faixa");
+  f.innerHTML = t+t+t+t;
+  requestAnimationFrame(()=>{ f.style.animationDuration = Math.max(12, (f.scrollWidth/2)/45) + "s"; });
+}
+function aplicarVisual(){
+  const c = CTX.campanha, raiz = document.documentElement.style;
+  const principal = (c && c.cor_principal) || (AP && AP.cor_principal);
+  const destaque = (c && c.cor_destaque) || (AP && AP.cor_destaque);
+  if (principal) raiz.setProperty("--ink", principal);
+  if (destaque){ raiz.setProperty("--gold", destaque); raiz.setProperty("--gold-soft", `color-mix(in srgb, ${destaque} 16%, #fff)`); }
+  const logo = (c && c.logo_url) || (AP && AP.logo_url);
+  $(".marca").innerHTML = logo ? `<img src="${esc(logo)}" alt="Keite Monik · Studio de Beleza" class="logo">` : `Keite Monik<small>Studio · Loja</small>`;
+}
+let timerBanner;
+function montarBanners(){
+  const s = $("#slides"), b = $("#bolinhas");
+  if (BANNERS){
+    const c = CTX.campanha;
+    let lista = c ? BANNERS.filter(x=>x.campanha_id===c.id) : [];
+    if (!lista.length) lista = BANNERS.filter(x=>!x.campanha_id);
+    if (lista.length) s.innerHTML = lista.map(x=>x.so_imagem?`<div class="slide so-img" data-ir="${esc(x.botao_categoria||"todos")}"><picture>${x.imagem_mobile_url?`<source media="(max-width:719px)" srcset="${esc(x.imagem_mobile_url)}">`:""}<img src="${esc(x.imagem_url)}" alt="${esc(x.titulo)}"></picture></div>`:`<div class="slide"><img src="${esc(x.imagem_url)}" alt="${esc(x.titulo)}">
+      <div class="slide-txt">${x.etiqueta?`<small>${esc(x.etiqueta)}</small>`:""}<h2>${esc(x.titulo)} ${x.titulo_destaque?`<em>${esc(x.titulo_destaque)}</em>`:""}</h2>${x.texto?`<p>${esc(x.texto)}</p>`:""}${x.botao_texto?`<button data-ir="${esc(x.botao_categoria||"todos")}">${esc(x.botao_texto)}</button>`:""}</div></div>`).join("");
+  }
+  const n = s.children.length;
+  b.innerHTML = n>1 ? Array.from({length:n},(_,i)=>`<button aria-label="Banner ${i+1}" class="${i?"":"on"}"></button>`).join("") : "";
+  s.scrollLeft = 0;
+  const ir = i => s.scrollTo({left:i*s.clientWidth});
+  b.querySelectorAll("button").forEach((x,i)=>x.onclick=()=>{ ir(i); reinicia(); });
+  const reinicia = ()=>{ clearInterval(timerBanner); if (n>1) timerBanner=setInterval(()=>ir((Math.round(s.scrollLeft/s.clientWidth)+1)%n),5000); };
+  s.ontouchstart = reinicia; reinicia();
+}
+$("#slides").addEventListener("scroll",()=>{ const s=$("#slides"), i=Math.round(s.scrollLeft/s.clientWidth); document.querySelectorAll("#bolinhas button").forEach((x,k)=>x.classList.toggle("on",k===i)); });
+$("#slides").addEventListener("click",e=>{ const x=e.target.closest("[data-ir]"); if(!x) return; filtro={cat:x.dataset.ir, sub:null}; montarFiltros(); vitrine(); $("#filtros").scrollIntoView({behavior:"smooth"}); });
 
-/* Relógio da oferta */
-let ultimaFase = null;
+/* Relógio: campanha ou oferta relâmpago */
+let estadoAnterior = null;
 function tique(){
   if (!LOJA) return;
-  const f = fase(), [hh,mm,ss] = hms(f.resta), box = document.getElementById("relampago");
-  if (f.promo !== ultimaFase){
-    if (ultimaFase !== null){ vitrine(); if (document.getElementById("gaveta").classList.contains("on")){ fretes=[]; freteSel=null; renderSacola(); } }
-    montarFaixa(); ultimaFase = f.promo;
+  atualizarCtx();
+  const c = CTX.campanha, r = CTX.relampago, box = $("#relampago");
+  const estado = c ? "c:"+c.id : r ? "r:"+r.promo : "n";
+  if (estado !== estadoAnterior){
+    const primeira = estadoAnterior === null;
+    estadoAnterior = estado;
+    aplicarVisual(); montarFaixa(); montarBanners();
+    if (!primeira){ vitrine(); if ($("#gaveta").classList.contains("on")){ fretes=[]; freteSel=null; renderSacola(); } }
   }
-  box.classList.toggle("normal", !f.promo);
-  box.innerHTML = f.promo
-    ? `<b>⚡ Oferta relâmpago</b> termina em <span class="relogio"><span>${hh}</span><span>${mm}</span><span>${ss}</span></span>`
-    : `<b>Preço normal agora.</b> Nova oferta relâmpago em <span class="relogio"><span>${mm}</span><span>${ss}</span></span>`;
-  document.querySelectorAll("[data-timer]").forEach(el=>{
-    el.classList.toggle("normal", !f.promo);
-    el.textContent = f.promo ? `⚡ Termina em ${hh}:${mm}:${ss}` : `Oferta volta em ${mm}:${ss}`;
-  });
+  let txtTimer = "", normal = false;
+  if (c){
+    const t = dhms(Date.parse(c.fim) - Date.now());
+    box.hidden = !c.contador; box.classList.remove("normal");
+    const blocos = (t.d?`<span>${t.d}d</span>`:"")+`<span>${t.h}</span><span>${t.m}</span><span>${t.s}</span>`;
+    box.innerHTML = `<b>${esc(c.nome)}</b> termina em <span class="relogio">${blocos}</span>`;
+    txtTimer = `Termina em ${t.d?t.d+"d ":""}${t.h}:${t.m}:${t.s}`;
+  } else if (r){
+    const [hh,mm,ss] = hms(r.resta);
+    box.hidden = false; box.classList.toggle("normal", !r.promo);
+    box.innerHTML = r.promo
+      ? `<b>⚡ Oferta relâmpago</b> termina em <span class="relogio"><span>${hh}</span><span>${mm}</span><span>${ss}</span></span>`
+      : `<b>Preço normal agora.</b> Nova oferta relâmpago em <span class="relogio"><span>${mm}</span><span>${ss}</span></span>`;
+    txtTimer = r.promo ? `⚡ Termina em ${hh}:${mm}:${ss}` : `Oferta volta em ${mm}:${ss}`; normal = !r.promo;
+  } else box.hidden = true;
+  document.querySelectorAll("[data-timer]").forEach(el=>{ el.classList.toggle("normal", normal); el.textContent = txtTimer; });
 }
 setInterval(tique, 1000);
 
@@ -663,6 +859,128 @@ setInterval(tique, 1000);
   fetch("/.netlify/functions/vendas-recentes").then(r=>r.json()).then(d=>{ lista=(d.vendas||[]).filter(v=>v.nome&&v.cidade&&v.produto); if(lista.length) tm=setTimeout(mostrar,7000); }).catch(()=>{});
 })();
 
+
+/* ===== Páginas institucionais e menu lateral ===== */
+const zapTxt = t => "https://wa.me/" + ((LOJA&&LOJA.whatsapp)||"5511985169729") + "?text=" + encodeURIComponent(t);
+const INFO = [["sobre","Sobre a Keite"],["faq","Perguntas frequentes"],["trocas","Trocas e devoluções"],["garantia","Garantia"],["privacidade","Política de privacidade"]];
+const FOTO_VAZIA = `<div class="autor-foto"><div class="autor-vazia"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M4 8h3l2-2h6l2 2h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>Aqui entra a sua foto<br>atendendo no Studio</div></div>`;
+const faq = (t, itens) => `<h2>${t}</h2><div class="faq">${itens.map(([q,r])=>`<details><summary>${q}</summary><div>${r}</div></details>`).join("")}</div>`;
+const PAGINAS = {
+ sobre: () => `
+  <div class="sobre-topo">${FOTO_VAZIA}
+   <div><span class="kicker">Sobre a Keite</span>
+    <h1>Compre seu cabelo com quem <em>entende</em> de Mega Hair</h1>
+    <p class="lead">Há mais de 10 anos na área da beleza, somos especialistas em Mega Hair de fibra humanizada e em micromechas aplicadas com a NanoPele, nossa técnica própria.</p>
+   </div></div>
+  <div class="numeros"><div><b>+10</b><span>anos na área da beleza</span></div><div><b>NanoPele</b><span>técnica própria de micromechas</span></div><div><b>Brasil</b><span>enviamos para todo o país</span></div></div>
+  <h2>Quem seleciona os seus cabelos</h2>
+  <p>A Keite Monik trabalha diariamente com Mega Hair e fibra humanizada, selecionando produtos pensando em naturalidade, beleza, movimento e durabilidade.</p>
+  <div class="pilares"><span>Naturalidade</span><span>Movimento</span><span>Beleza</span><span>Durabilidade</span></div>
+  <h2>O Studio</h2>
+  <p>O Studio Keite Monik fica em Ribeirão das Neves – MG. Além da loja on-line, fazemos a aplicação de Mega Hair e micromechas no Studio.</p>
+  <div class="cx"><b>Atendimento no Studio</b><br>Terça: 9h às 13h · Quarta a sábado: 10h às 18h<br>Horários com agendamento pelo WhatsApp.</div>
+  <h2>Cursos</h2>
+  <p>A Keite também ensina a técnica. Para saber das próximas turmas, valores e conteúdo, fale com a gente pelo WhatsApp.</p>
+  <div class="botoes"><a class="btn-esc" target="_blank" rel="noopener" href="${zapTxt("Olá, Keite! Quero informações sobre o curso.")}">Quero saber do curso</a>
+   <a class="link-zap" target="_blank" rel="noopener" href="${zapTxt("Olá, Keite! Quero agendar um horário no Studio.")}">Agendar no Studio</a></div>`,
+ faq: () => `
+  <span class="kicker">Ajuda</span><h1>Perguntas frequentes</h1>
+  <p class="lead">Não encontrou sua dúvida? Chama a gente no <a target="_blank" rel="noopener" href="${zapTxt("Olá, Keite! Tenho uma dúvida sobre a loja.")}">WhatsApp</a>.</p>
+  ${faq("Compra e pagamento",[
+   ["Quais as formas de pagamento?","<p>Pix, cartão de crédito ou boleto. O pagamento é feito no ambiente seguro do Mercado Pago.</p>"],
+   ["Posso parcelar?","<p>Sim, no cartão de crédito. As opções de parcelamento aparecem na tela do Mercado Pago na hora de pagar.</p>"],
+   ["Como sei que meu pedido foi confirmado?","<p>Assim que o pagamento é aprovado, o pedido entra no nosso sistema e você recebe as atualizações pelo WhatsApp.</p>"]])}
+  ${faq("Envio e prazos",[
+   ["Em quanto tempo meu pedido é postado?","<p><b>Micromechas:</b> até 5 dias úteis para a produção.<br><b>Demais produtos:</b> até 3 dias úteis.</p><p>O prazo conta a partir da confirmação do pagamento. Depois da postagem, vale o prazo de entrega do frete que você escolheu.</p>"],
+   ["Vocês enviam para todo o Brasil?","<p>Sim. O frete é calculado na sacola pelo seu CEP, com opções de envio e prazo de entrega.</p>"],
+   ["Como acompanho a entrega?","<p>Quando o pedido é postado, enviamos o código de rastreio pelo WhatsApp.</p>"]])}
+  ${faq("Sobre os cabelos",[
+   ["Pode usar chapinha e babyliss?","<p>Sim. A fibra humanizada aceita fonte de calor até 180°C.</p>"],
+   ["Pode ir ao mar e à piscina?","<p>Pode, sim.</p>"],
+   ["100g ou 150g: qual escolher?","<p>Depende do volume que você quer e do seu cabelo. Se ficar em dúvida, mande uma foto pelo WhatsApp que a Keite indica a quantidade certa.</p>"],
+   ["Quais tamanhos vocês têm?","<p>50/55 cm, 60/65 cm e 70/75 cm. O preço é o mesmo em qualquer tamanho; o que muda o valor é a quantidade (100g ou 150g).</p>"],
+   ["Como escolho a cor?","<p>Cada produto tem fotos da cor. Se quiser ajuda para combinar com o seu cabelo, mande uma foto pelo WhatsApp.</p>"],
+   ["Quanto tempo dura?","<p>Depende dos cuidados e da manutenção. A Keite orienta como cuidar para o cabelo durar mais.</p>"]])}
+  ${faq("Aplicação e cursos",[
+   ["Vocês aplicam?","<p>Sim, no Studio em Ribeirão das Neves – MG, com horário agendado pelo WhatsApp.</p>"],
+   ["Vocês dão curso?","<p>Sim. Informações sobre turmas e valores pelo WhatsApp.</p>"]])}
+  ${faq("Trocas e garantia",[
+   ["Posso trocar ou devolver?","<p>Sim, em até 7 dias após receber, com o produto sem uso e nas mesmas condições em que chegou. Veja <a href=\"#trocas\">Trocas e devoluções</a>.</p>"],
+   ["E se vier com defeito?","<p>Confira o produto assim que receber, antes de usar. Se houver algum problema, avise em até 7 dias pelo WhatsApp com fotos e vídeo. Veja <a href=\"#garantia\">Garantia</a>.</p>"]])}`,
+ trocas: () => `
+  <span class="kicker">Políticas</span><h1>Trocas e devoluções</h1>
+  <p class="lead">Queremos que você fique feliz com o seu cabelo. Por ser um produto de uso pessoal, só aceitamos trocas e devoluções de produtos <b>sem uso</b>, nas mesmas condições em que foram recebidos.</p>
+  <h2>Desistência da compra (direito de arrependimento)</h2>
+  <p>Você pode desistir da compra em até <b>7 dias corridos</b> a partir do recebimento, conforme o Código de Defesa do Consumidor (art. 49).</p>
+  <p>Aprovada a devolução, reembolsamos o valor total pago, incluindo o frete, pelo mesmo meio de pagamento.</p>
+  <h2>Condições para troca ou devolução</h2>
+  <ul><li>Produto sem uso, nas mesmas condições em que foi recebido;</li><li>Na embalagem original, com lacre e etiquetas;</li><li>Envio de <b>fotos e vídeo</b> do produto pelo WhatsApp para avaliação.</li></ul>
+  <div class="cx"><b>Não aceitamos troca nem devolução de produtos usados</b>: aplicados, lavados, cortados, coloridos, com química ou sem a embalagem original.</div>
+  <h2>Como solicitar</h2>
+  <ol class="passos"><li>Chame no WhatsApp em até 7 dias após receber, informando o número do pedido.</li><li>Envie fotos e um vídeo do produto e da embalagem.</li><li>Depois da avaliação, enviamos as instruções de postagem.</li><li>Recebido e conferido o produto, fazemos a troca ou o reembolso.</li></ol>
+  <div class="botoes"><a class="btn-esc" target="_blank" rel="noopener" href="${zapTxt("Olá, Keite! Quero solicitar uma troca/devolução. Número do pedido: ")}">Solicitar pelo WhatsApp</a></div>
+  <p class="nota">Produto com defeito? Veja a nossa <a href="#garantia">política de garantia</a>.</p>`,
+ garantia: () => `
+  <span class="kicker">Políticas</span><h1>Garantia</h1>
+  <p class="lead">Defeitos de fabricação em cabelo e micromecha são visíveis antes do uso. Por isso, <b>confira o seu produto assim que receber, antes de usar ou aplicar</b>.</p>
+  <div class="cx"><b>Encontrou algum problema?</b> Avise pelo WhatsApp em até 7 dias após o recebimento, <b>antes de usar</b>, com fotos e vídeo do produto.</div>
+  <h2>O que conferir ao receber</h2>
+  <ul><li>Se a cor, o tamanho e a quantidade são os que você pediu;</li><li>O acabamento e o estado das mechas;</li><li>Se a embalagem chegou inteira (se chegou danificada pelo transporte, fotografe antes de abrir).</li></ul>
+  <h2>Como funciona</h2>
+  <ol class="passos"><li>Chame no WhatsApp com o número do pedido.</li><li>Envie fotos e vídeo mostrando o problema, com o produto ainda sem uso.</li><li>Fazemos a avaliação e, se o defeito for confirmado, trocamos por um produto igual. Se não for possível, fazemos o reembolso.</li></ol>
+  <div class="cx"><b>Produtos usados não têm troca por defeito</b>: depois de aplicado, lavado, cortado, colorido ou com química, o produto não pode mais ser avaliado como veio de fábrica.</div>
+  <div class="botoes"><a class="btn-esc" target="_blank" rel="noopener" href="${zapTxt("Olá, Keite! Recebi meu pedido e encontrei um problema. Número do pedido: ")}">Avisar pelo WhatsApp</a></div>
+  <p class="nota">Desistiu da compra? Veja <a href="#trocas">Trocas e devoluções</a>.</p>`,
+ privacidade: () => `
+  <span class="kicker">Políticas</span><h1>Política de privacidade</h1>
+  <p class="lead">Explicamos aqui quais dados pedimos, para que usamos e como você pode pedir alterações, de acordo com a Lei Geral de Proteção de Dados (LGPD).</p>
+  <h2>Quais dados pedimos</h2>
+  <p>Nome, CPF, e-mail, telefone/WhatsApp e endereço de entrega, informados por você na finalização da compra.</p>
+  <h2>Para que usamos</h2>
+  <ul><li>Processar o pagamento e registrar o seu pedido;</li><li>Gerar a etiqueta de envio e entregar o produto;</li><li>Falar com você sobre o pedido, trocas e garantia.</li></ul>
+  <h2>Com quem compartilhamos</h2>
+  <p>Somente com quem precisa dos dados para concluir a compra: o <b>Mercado Pago</b> (pagamento) e a <b>SuperFrete</b> e transportadoras (entrega). Não vendemos nem repassamos seus dados para outros fins.</p>
+  <h2>Pagamento</h2>
+  <p>O pagamento é feito no ambiente do Mercado Pago. Nós não recebemos nem guardamos os dados do seu cartão.</p>
+  <h2>Sacola no seu navegador</h2>
+  <p>Os itens da sacola ficam salvos no seu próprio navegador, para você não perder a seleção ao voltar à loja.</p>
+  <h2>Seus direitos</h2>
+  <p>Você pode pedir a qualquer momento para ver, corrigir ou apagar os seus dados, pelo WhatsApp.</p>
+  <p class="nota">Responsável pelos dados: Studio Keite Monik · CNPJ 58.868.387/0001-82 · Ribeirão das Neves – MG.</p>`
+};
+const TITULO_LOJA = document.title;
+function montarMenu(){
+  const atual = location.hash.slice(1);
+  const raizes = CATS.filter(c=>!c.pai_id && temProduto(c.id));
+  $("#menuCats").innerHTML = `<a href="#loja">Todos os produtos</a>` + raizes.map(c=>`<a href="#loja/${esc(c.id)}">${esc(c.nome)}</a>`).join("");
+  $("#menuInfo").innerHTML = INFO.map(([id,n])=>`<a href="#${id}"${atual===id?' aria-current="page"':""}>${n}</a>`).join("");
+  $("#menuInsta").href = $("#linkInsta").href;
+}
+function rota(){
+  if (!LOJA) { setTimeout(rota, 200); return; }
+  const h = decodeURIComponent(location.hash.slice(1)), pg = $("#pagina");
+  if (PAGINAS[h]) {
+    const nome = INFO.find(x=>x[0]===h)[1];
+    pg.innerHTML = `<div class="pg-grid"><nav class="pg-lado" aria-label="Atendimento">${INFO.map(([id,n])=>`<a href="#${id}"${id===h?' aria-current="page"':""}>${n}</a>`).join("")}</nav>
+      <article class="pg-txt"><a class="voltar" href="#loja">← Voltar para a loja</a>${PAGINAS[h]()}</article></div>`;
+    pg.hidden = false; document.body.classList.add("em-pagina");
+    document.title = nome + " · Studio Keite Monik";
+    window.scrollTo(0, 0);
+    const ativo = pg.querySelector(".pg-lado [aria-current]"); if (ativo && innerWidth < 860) ativo.scrollIntoView({inline:"center",block:"nearest"});
+    window.scrollTo(0, 0);
+    return;
+  }
+  pg.hidden = true; pg.innerHTML = ""; document.body.classList.remove("em-pagina"); document.title = TITULO_LOJA;
+  if (h.startsWith("loja")) {
+    const id = h.split("/")[1];
+    filtro = {cat: id || "todos", sub: null}; montarFiltros(); vitrine();
+    requestAnimationFrame(()=>window.scrollTo({top:$("#filtros").getBoundingClientRect().top+scrollY-80,behavior:"smooth"}));
+  }
+}
+window.addEventListener("hashchange", rota);
+$("#abrirMenu").onclick = () => { montarMenu(); abrir("#menuLat"); };
+$("#menuLat").addEventListener("click", e => { if (e.target.closest("a[href^='#']")) fechar(); });
+rota();
 let tt; function toast(t){ const el=$("#toast"); el.textContent=t; el.classList.add("on"); clearTimeout(tt); tt=setTimeout(()=>el.classList.remove("on"),1800); }
 </script>
 </body>

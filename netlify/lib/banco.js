@@ -26,6 +26,7 @@ async function variacoesAtivas(ids) {
       peso_g: v.peso_g, tamanho: v.tamanho, preco: Number(v.preco),
       precoDe: v.preco_de == null ? null : Number(v.preco_de), estoque: v.estoque,
       gramas: v.peso_g || v.produto.gramas || 100, fotos: v.produto.fotos || [],
+      categoria_id: cat.id || null, pai_id: cat.pai_id || null,
       tipo_crm: cat.tipo_crm || "outro",
       textura: cat.textura || null,
     };
@@ -33,8 +34,26 @@ async function variacoesAtivas(ids) {
   return mapa;
 }
 
+// Aparência (oferta relâmpago) + campanhas no ar e seus preços especiais
+async function regrasDePreco() {
+  const [ap, campanhas] = await Promise.all([
+    rest("loja_aparencia?select=oferta_ativa,oferta_inicio,oferta_horas,oferta_minutos&limit=1"),
+    rest("loja_campanhas?select=id,nome,inicio,fim,prioridade,ativo,desconto_pct,desconto_categoria_id"),
+  ]);
+  const lista = campanhas || [];
+  if (lista.length) {
+    const precos = await rest(`loja_campanha_precos?select=campanha_id,variante_id,preco&campanha_id=in.(${lista.map((c) => `"${c.id}"`).join(",")})`);
+    for (const c of lista) {
+      c.desconto_pct = c.desconto_pct == null ? null : Number(c.desconto_pct);
+      c.precos = {};
+      for (const x of precos) if (x.campanha_id === c.id) c.precos[x.variante_id] = Number(x.preco);
+    }
+  }
+  return { aparencia: (ap && ap[0]) || null, campanhas: lista };
+}
+
 function rpc(nome, args) {
   return rest("rpc/" + nome, { method: "POST", body: JSON.stringify(args) });
 }
 
-module.exports = { variacoesAtivas, rpc };
+module.exports = { variacoesAtivas, regrasDePreco, rpc };

@@ -71,3 +71,7 @@ Endereço: `seu-site/admin` (ex.: https://lojakeitemonik.netlify.app/admin). Ent
 - **Produtos** (só administradora): cadastrar, editar preço, fotos, estoque e esconder produtos. As mudanças aparecem na loja na hora, sem mexer no GitHub.
 
 Variável obrigatória no Netlify para o painel receber os pedidos: `LOJA_SEGREDO` (valor enviado na conversa).
+
+## Aparência e Campanhas (painel)
+- **Aparência:** logo, cores, faixa do topo, oferta relâmpago (ligar/desligar e duração) e banners do dia a dia.
+- **Campanhas:** ofertas com data de início e fim que ligam e desligam sozinhas: desconto geral (loja toda ou por categoria), preços específicos por opção, cores, logo, faixa, contador e banners próprios. Durante uma campanha a oferta relâmpago pausa.
