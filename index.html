@@ -222,7 +222,7 @@
   /* Bloco "Conheça a Keite" na página inicial */
   .conheca{margin:56px 0 8px;padding:28px 24px;border-radius:20px;background:linear-gradient(135deg,#F4ECE1,#EFE3D3);display:grid;gap:18px;align-items:center}
   @media(min-width:760px){.conheca{grid-template-columns:auto 1fr auto;gap:32px;padding:32px 40px}}
-  .conheca .selo{width:84px;height:84px;border-radius:50%;background:#fff url(img/logo.png) center/78% no-repeat;box-shadow:0 0 0 1px var(--line),0 6px 18px rgba(60,40,25,.08)}
+  .conheca .selo{width:96px;height:96px;border-radius:50%;background:#fff url(img/keite-trabalhando.jpg) 50% 22%/cover no-repeat;box-shadow:0 0 0 1px var(--line),0 6px 18px rgba(60,40,25,.08)}
   .conheca small{font:500 10.5px/1 var(--sans);letter-spacing:.28em;text-transform:uppercase;color:var(--gold)}
   .conheca h2{font:500 clamp(26px,4.4vw,36px)/1.08 var(--serif);margin:8px 0 6px;text-wrap:balance}
   .conheca p{color:var(--muted);font-size:15px}
@@ -882,7 +882,7 @@ setInterval(tique, 1000);
 /* ===== Páginas institucionais e menu lateral ===== */
 const zapTxt = t => "https://wa.me/" + ((LOJA&&LOJA.whatsapp)||"5511985169729") + "?text=" + encodeURIComponent(t);
 const INFO = [["sobre","Sobre a Keite"],["faq","Perguntas frequentes"],["trocas","Trocas e devoluções"],["garantia","Garantia"],["privacidade","Política de privacidade"]];
-const FOTO_VAZIA = `<div class="autor-foto"><div class="autor-vazia"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M4 8h3l2-2h6l2 2h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>Aqui entra a sua foto<br>atendendo no Studio</div></div>`;
+const FOTO_VAZIA = `<div class="autor-foto"><img src="img/keite-trabalhando.jpg" alt="Keite Monik aplicando Mega Hair no Studio" style="object-position:center 28%"></div>`;
 const faq = (t, itens) => `<h2>${t}</h2><div class="faq">${itens.map(([q,r])=>`<details><summary>${q}</summary><div>${r}</div></details>`).join("")}</div>`;
 const PAGINAS = {
  sobre: () => `

@@ -764,7 +764,7 @@ function abrirBanner(b, campanhaId){
       <label class="check"><input type="checkbox" id="bnSoImg" ${b.so_imagem?"checked":""}> É uma arte pronta (já tem texto e botão na imagem)</label>
       <div id="bnCelBox" ${b.so_imagem?"":"hidden"} style="display:grid;gap:8px">
         <h3 style="margin-top:6px">Versão para celular (quadrada)</h3>
-        <div id="bnImgCel">${imgBannerCel?`<img src="${urlImg(imgBannerCel)}" alt="" style="width:160px;aspect-ratio:1;object-fit:cover;border-radius:10px">`:`<p class="ajuda">Sem versão de celular: o celular mostra a arte inteira, menor.</p>`}</div>
+        <div id="bnImgCel">${imgBannerCel?`<img src="${urlImg(imgBannerCel)}" alt="" style="width:160px;aspect-ratio:1;object-fit:cover;border-radius:10px">`:`<p class="ajuda">Sem versão de celular, o celular corta as laterais da arte.</p>`}</div>
         <label class="btn2" for="bnFileCel" style="cursor:pointer;justify-self:start">${imgBannerCel?"Trocar imagem do celular":"Escolher imagem do celular"}</label>
         <input type="file" id="bnFileCel" accept="image/*" hidden>
         <span class="ajuda">Tamanho ideal: 1080×1080 px.</span>
