@@ -26,7 +26,7 @@ async function variacoesAtivas(ids) {
       peso_g: v.peso_g, tamanho: v.tamanho, preco: Number(v.preco),
       precoDe: v.preco_de == null ? null : Number(v.preco_de), estoque: v.estoque,
       gramas: v.peso_g || v.produto.gramas || 100, fotos: v.produto.fotos || [],
-      categoria_id: cat.id || null, pai_id: cat.pai_id || null,
+      categoria_id: cat.id || null, pai_id: cat.pai_id || null, fixo: !!v.produto.desconto_fixo,
       tipo_crm: cat.tipo_crm || "outro",
       textura: cat.textura || null,
     };

@@ -28,7 +28,7 @@ async function validarItens(itens) {
     if (v.estoque != null && v.estoque < qtd) {
       throw new Error(v.estoque === 0 ? `${nome} esgotou.` : `Só temos ${v.estoque} unidade(s) de ${nome}.`);
     }
-    const preco = Precos.precoInfo({ id: v.variante_id, preco: v.preco, precoDe: v.precoDe, categoria_id: v.categoria_id, pai_id: v.pai_id }, ctx).preco;
+    const preco = Precos.precoInfo({ id: v.variante_id, preco: v.preco, precoDe: v.precoDe, categoria_id: v.categoria_id, pai_id: v.pai_id, fixo: v.fixo }, ctx).preco;
     return { ...v, nome, preco, qtd };
   });
 }

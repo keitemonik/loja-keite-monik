@@ -415,6 +415,7 @@ function abrirProduto(p){
       <label>Categoria<select id="fCat">${opcoesCat(p.categoria_id)}</select></label>
       <label>Descrição<textarea id="fDesc">${esc(p.descricao)}</textarea></label>
       <label class="check"><input type="checkbox" id="fAtivo" ${p.ativo?"checked":""}> Mostrar na loja</label>
+      <label class="check"><input type="checkbox" id="fFixo" ${p.desconto_fixo?"checked":""}> Desconto fixo (o preço riscado vale sempre, fora da oferta relâmpago)</label>
     </div>
     <div class="bloco"><h3>Variações</h3>
       <span class="ajuda">Marque os pesos e tamanhos que esse produto tem. Cada combinação ganha seu próprio preço e estoque. Para produtos sem variação (ex.: Misturinha), deixe tudo desmarcado.</span>
@@ -422,7 +423,7 @@ function abrirProduto(p){
       <div><b style="font-size:13px">Tamanho</b><div class="opchips" id="selTams"></div></div>
       <div id="semPeso" hidden><label>Peso para o frete (g)<input id="fGramas" inputmode="numeric" value="${p.gramas||100}"></label></div>
       <div id="gradeVar" style="display:grid;gap:8px"></div>
-      <span class="ajuda">Preço riscado é opcional. Com ele, a variação entra na oferta relâmpago. Estoque vazio = não controlar.</span>
+      <span class="ajuda">Preço riscado é opcional. Com ele, a variação entra na oferta relâmpago, a não ser que o produto esteja marcado como "Desconto fixo". Estoque vazio = não controlar.</span>
     </div>
     <span class="erro" id="fErro"></span>`;
   $("#gBase").innerHTML = `<button class="btn" id="fSalvar">${novo?"Cadastrar produto":"Salvar alterações"}</button>`;
@@ -538,7 +539,7 @@ async function salvarProduto(novo, p){
   }
   if (!linhas.some(l=>l.ativo!==false)) return erro("Deixe pelo menos uma opção à venda.");
   const gramas = pesosSel.length ? Math.max(...pesosSel) : (parseInt($("#fGramas").value,10)||100);
-  const dados = { nome, categoria_id, categoria: caminhoCat(categoria_id), gramas, descricao: $("#fDesc").value.trim(), ativo: $("#fAtivo").checked, fotos: fotosEdit };
+  const dados = { nome, categoria_id, categoria: caminhoCat(categoria_id), gramas, descricao: $("#fDesc").value.trim(), ativo: $("#fAtivo").checked, desconto_fixo: $("#fFixo").checked, fotos: fotosEdit };
   $("#fSalvar").disabled = true;
   let id = p.id;
   let res;

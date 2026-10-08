@@ -265,6 +265,13 @@
   .qtd button{width:36px;height:36px;font-size:18px}
   .qtd span{min-width:28px;text-align:center;font-weight:500}
 
+  .desc{margin-top:14px;font-size:14.5px;line-height:1.6;color:var(--muted)}
+  .desc p{margin:0}
+  .desc .d-tit{margin-top:14px;margin-bottom:2px;color:var(--ink);font-weight:600;font-size:13.5px;letter-spacing:.04em}
+  .desc .d-tit:first-child{margin-top:0;font-size:15px}
+  .desc .d-esp{height:8px}
+  .desc .d-faixa{margin-top:8px;color:var(--ink);font-weight:500}
+  .desc .d-tit+.d-faixa{margin-top:2px}
   /* Opções do produto */
   .opgrupo{margin-top:16px;display:grid;gap:8px}
   .opgrupo>span{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);font-weight:500}
@@ -422,7 +429,7 @@ let AP = null, CAMPS = [], BANNERS = null, CTX = {campanha:null, relampago:null}
 function atualizarCtx(){ CTX = Precos.contexto(AP, CAMPS, Date.now(), 0); return CTX; }
 function pinfo(v){
   const ref = VARS[v.id], c = ref && cat(ref.p.categoria_id);
-  return Precos.precoInfo({id:v.id, preco:v.preco, precoDe:v.precoDe, categoria_id:c?c.id:null, pai_id:c?c.pai_id:null}, CTX);
+  return Precos.precoInfo({id:v.id, preco:v.preco, precoDe:v.precoDe, categoria_id:c?c.id:null, pai_id:c?c.pai_id:null, fixo:!!(ref&&ref.p.fixo)}, CTX);
 }
 function preco(v){ return pinfo(v).preco; }
 function hms(ms){ const s=Math.max(0,Math.floor(ms/1000)); return [Math.floor(s/3600),Math.floor(s/60)%60,s%60].map(n=>String(n).padStart(2,"0")); }
@@ -445,7 +452,7 @@ async function catalogoDoPainel(){
     sbGet("loja_produtos?select=*,loja_variantes(*)&ativo=eq.true&order=ordem.asc,nome.asc"),
     sbGet("loja_categorias?select=*&ativo=eq.true&order=ordem.asc,nome.asc")
   ]);
-  const lista = prods.map(p=>({ id:p.id, nome:p.nome, categoria_id:p.categoria_id, fotos:p.fotos||[], descricao:p.descricao, gramas:p.gramas,
+  const lista = prods.map(p=>({ id:p.id, nome:p.nome, categoria_id:p.categoria_id, fotos:p.fotos||[], descricao:p.descricao, gramas:p.gramas, fixo:!!p.desconto_fixo,
     variantes:(p.loja_variantes||[]).filter(v=>v.ativo).map(v=>({id:v.id, peso_g:v.peso_g, tamanho:v.tamanho, preco:+v.preco,
       precoDe:v.preco_de==null?null:+v.preco_de, estoque:v.estoque}))
       .sort((a,b)=>(a.peso_g||0)-(b.peso_g||0) || ordTam(a.tamanho)-ordTam(b.tamanho)) }))
@@ -475,6 +482,8 @@ setInterval(()=>regrasDoPainel().then(r=>{ aplicarRegras(r); estadoAnterior="rec
 Promise.all([fetch("produtos.json").then(r=>r.json()), catalogoDoPainel().catch(()=>null), regrasDoPainel().catch(()=>null)]).then(([d, painel, regras])=>{
   LOJA = d.loja; aplicarRegras(regras);
   PRODUTOS = painel ? painel.lista : deJson(d);
+  // Ordem nova a cada visita (ao abrir ou atualizar a página); durante a navegação ela não muda
+  for (let i = PRODUTOS.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [PRODUTOS[i], PRODUTOS[j]] = [PRODUTOS[j], PRODUTOS[i]]; }
   CATS = painel ? painel.cats : [];
   VARS = {};
   PRODUTOS.forEach(p=>p.variantes.forEach(v=>VARS[v.id] = {v, p}));
@@ -500,8 +509,8 @@ function foto(p, cls=""){
   return `<div class="sem-foto ${cls}"><div><b>${g}</b><span>${esc(r?r.nome:"")}</span></div></div>`;
 }
 function precoHTML(v, aPartir){
-  const i = pinfo(v);
-  const temTimer = (CTX.campanha && i.de && CTX.campanha.contador) || (!CTX.campanha && CTX.relampago && v.precoDe!=null);
+  const i = pinfo(v), ref = VARS[v.id], fixo = !!(ref && ref.p.fixo);
+  const temTimer = !fixo && ((CTX.campanha && i.de && CTX.campanha.contador) || (!CTX.campanha && CTX.relampago && v.precoDe!=null));
   return `<div class="precos">${aPartir?`<span class="de" style="text-decoration:none">a partir de</span>`:""}${i.de?`<span class="de">${R$(i.de)}</span>`:""}<span class="por">${R$(i.preco)}</span></div>${temTimer?`<span class="timer" data-timer></span>`:""}`;
 }
 function maisBarata(p){
@@ -559,6 +568,16 @@ $("#grade").addEventListener("click", e=>{
 /* Produto */
 let qtdModal = 1, escolha = {peso:null, tam:null};
 const achar = (p, peso, tam) => p.variantes.find(v=>(v.peso_g||null)===peso && (v.tamanho||null)===tam);
+/* Descrição do produto: respeita as linhas digitadas e destaca os títulos em MAIÚSCULAS */
+function descHTML(t){
+  return String(t||"").split(/\r?\n/).map(l=>l.trim()).map(l=>{
+    if (!l) return '<div class="d-esp"></div>';
+    const letras = l.replace(/[^A-Za-zÀ-ÿ]/g,""), maius = letras.replace(/[^A-ZÀ-Þ]/g,"");
+    const titulo = letras.length > 3 && maius.length / letras.length > .7;
+    const faixa = !titulo && /^\d+(,\d+)?\s?(g|kg)\b/i.test(l);
+    return `<p class="${titulo?"d-tit":faixa?"d-faixa":""}">${esc(l)}</p>`;
+  }).join("");
+}
 function abrirProduto(id){
   const p = PRODUTOS.find(x=>x.id===id); qtdModal = 1;
   const ini = p.variantes.find(disponivel) || p.variantes[0];
@@ -574,7 +593,7 @@ function abrirProduto(id){
       <div id="mPreco"></div>
       <div class="pix">Pague com Pix ou em até 12x no cartão</div>
       <div id="mOpcoes"></div>
-      <p style="margin-top:14px">${esc(p.descricao)}</p>
+      <div class="desc">${descHTML(p.descricao)}</div>
       <div class="lista-info">
         ${r?`<div><b>Tipo:</b> ${esc(r.nome)}</div>`:""}
         <div><b>Envio:</b> Correios, com rastreio</div>

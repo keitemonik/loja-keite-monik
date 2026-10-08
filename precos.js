@@ -27,9 +27,11 @@
     return { campanha, relampago: campanha ? null : relampago(ap, agora, folgaMin) };
   }
 
-  // v = { id, preco, precoDe, categoria_id, pai_id }  →  { preco, de }  (de = preço riscado ou null)
+  // v = { id, preco, precoDe, categoria_id, pai_id, fixo }  →  { preco, de }  (de = preço riscado ou null)
+  // fixo = desconto fixo do produto: o preço riscado vale sempre, sem depender da oferta relâmpago
   function precoInfo(v, ctx) {
     const normal = v.precoDe != null ? v.precoDe : v.preco;
+    const fixo = v.fixo && v.precoDe != null ? { preco: v.preco, de: v.precoDe } : null;
     const c = ctx && ctx.campanha;
     if (c) {
       const especifico = c.precos && c.precos[v.id];
@@ -39,8 +41,10 @@
         c.desconto_categoria_id === v.categoria_id || c.desconto_categoria_id === v.pai_id)) {
         p = arred(normal * (1 - c.desconto_pct / 100));
       }
+      if (fixo && (!p || p >= fixo.preco)) return fixo; // campanha só vale se deixar ainda mais barato
       return p && p < normal ? { preco: p, de: normal } : { preco: normal, de: null };
     }
+    if (fixo) return fixo;
     const r = ctx && ctx.relampago;
     if (r && v.precoDe != null) return r.promo ? { preco: v.preco, de: v.precoDe } : { preco: v.precoDe, de: null };
     return { preco: normal, de: null };
