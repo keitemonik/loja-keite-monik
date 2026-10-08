@@ -24,6 +24,41 @@
   [hidden]{display:none!important}
   :focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 
+
+  /* Métricas */
+  .met-topo{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin:18px 0 14px}
+  .met-cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  @media(min-width:760px){.met-cards{grid-template-columns:repeat(4,minmax(0,1fr))}}
+  .met-card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+  .met-card span{display:block;font-size:12.5px;color:var(--muted)}
+  .met-card b{display:block;font:600 28px/1.1 var(--serif);margin-top:4px}
+  .met-card small{display:block;font-size:12px;color:var(--muted);margin-top:2px}
+  .met-bloco{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-top:12px}
+  .met-bloco h3{font:600 20px/1.1 var(--serif);margin-bottom:4px}
+  .met-bloco>.ajuda{display:block;margin-bottom:12px}
+  .funil{display:grid;gap:10px}
+  .funil-l{display:grid;grid-template-columns:minmax(120px,190px) 1fr 44px;gap:12px;align-items:center}
+  @media(max-width:560px){.funil-l{grid-template-columns:1fr auto;gap:4px 10px}.funil-l .funil-barra{grid-column:1/-1;grid-row:2}}
+  .funil-l>b{font-weight:600;font-size:15px;text-align:right;font-variant-numeric:tabular-nums}
+  .funil-l .rot{font-size:14px;line-height:1.25}
+  .funil-l .rot small{display:block;font-size:12px;color:var(--muted)}
+  .funil-barra{position:relative;height:22px;background:var(--bg);border-radius:4px;overflow:hidden}
+  .funil-barra i{position:absolute;left:0;top:0;bottom:0;background:var(--gold);border-radius:0 4px 4px 0;min-width:2px}
+  .funil-barra em{position:absolute;left:10px;top:50%;transform:translateY(-50%);font-style:normal;font-weight:600;font-size:13.5px;color:var(--ink)}
+  .funil-barra i+em{color:var(--ink)}
+  .perda{font-size:12px;color:var(--err);margin:-4px 0 0 calc(min(190px,40%) + 12px)}
+  .met-2{display:grid;gap:12px}
+  @media(min-width:760px){.met-2{grid-template-columns:1fr 1fr}}
+  .met-tab{width:100%;border-collapse:collapse;font-size:14px}
+  .met-tab th.n{text-align:right}
+  .met-tab th{text-align:left;font-weight:500;color:var(--muted);font-size:12.5px;padding:6px 4px;border-bottom:1px solid var(--line)}
+  .met-tab td{padding:8px 4px;border-bottom:1px solid var(--line)}
+  .met-tab td.n{text-align:right;font-variant-numeric:tabular-nums}
+  .dias{display:flex;align-items:flex-end;gap:2px;height:140px;padding-top:8px;border-bottom:1px solid var(--line)}
+  .dias div{flex:1;min-width:3px;display:flex;align-items:flex-end;height:100%;cursor:default}
+  .dias div i{display:block;width:100%;background:var(--gold);border-radius:3px 3px 0 0;min-height:2px}
+  .dias div:hover i{background:var(--ink)}
+  .dias-eixo{display:flex;justify-content:space-between;font-size:11.5px;color:var(--muted);margin-top:4px}
   /* Login */
   .login{min-height:100vh;display:grid;place-items:center;padding:24px 16px}
   .login form{width:min(380px,100%);background:var(--card);border:1px solid var(--line);border-radius:18px;padding:28px 22px;display:grid;gap:12px}
@@ -150,6 +185,7 @@
         <button role="tab" aria-selected="false" data-aba="produtos" id="abaProdutos" data-so-admin>Produtos</button>
         <button role="tab" aria-selected="false" data-aba="aparencia" data-so-admin>Aparência</button>
         <button role="tab" aria-selected="false" data-aba="campanhas" data-so-admin>Campanhas</button>
+        <button role="tab" aria-selected="false" data-aba="metricas" data-so-admin>Métricas</button>
       </nav>
       <button class="sair" id="sair">Sair</button>
     </div>
@@ -175,6 +211,7 @@
     </section>
     <section id="secAparencia" hidden></section>
     <section id="secCampanhas" hidden></section>
+    <section id="secMetricas" hidden></section>
   </main>
 </div>
 
@@ -231,9 +268,85 @@ document.querySelector(".abas").addEventListener("click", e=>{
   $("#secProdutos").hidden = b.dataset.aba !== "produtos";
   $("#secAparencia").hidden = b.dataset.aba !== "aparencia";
   $("#secCampanhas").hidden = b.dataset.aba !== "campanhas";
+  $("#secMetricas").hidden = b.dataset.aba !== "metricas";
+  if (b.dataset.aba==="metricas") carregarMetricas();
   if (b.dataset.aba==="aparencia") desenharAparencia();
   if (b.dataset.aba==="campanhas") desenharCampanhas();
 });
+
+
+/* ---------- Métricas ---------- */
+let periodoMet = "7";
+const NOMES_FUNIL = [
+  ["visitas","Visitaram a loja","pessoas que entraram"],
+  ["ver_produto","Abriram um produto",""],
+  ["add_sacola","Colocaram na sacola",""],
+  ["frete","Calcularam o frete",""],
+  ["entrega","Preencheram a entrega",""],
+  ["pagamento","Foram para o pagamento","abriram o Mercado Pago"],
+  ["pagos","Pagaram","pedidos aprovados"]
+];
+function intervaloMet(){
+  const fim = new Date(), ini = new Date(); ini.setHours(0,0,0,0);
+  if (periodoMet==="mes") ini.setDate(1);
+  else if (periodoMet!=="hoje") ini.setDate(ini.getDate() - (parseInt(periodoMet,10)-1));
+  fim.setTime(fim.getTime() + 60e3);
+  return [ini, fim];
+}
+async function carregarMetricas(){
+  const sec = $("#secMetricas");
+  const chips = [["hoje","Hoje"],["7","7 dias"],["30","30 dias"],["mes","Este mês"],["90","90 dias"]];
+  sec.innerHTML = `<div class="met-topo"><div class="chips" id="metPer">${chips.map(([k,n])=>`<button class="chip" data-per="${k}" aria-pressed="${k===periodoMet}">${n}</button>`).join("")}</div>
+    <button class="btn2" id="metAtualizar">Atualizar</button></div><div id="metCorpo"><p class="ajuda">Carregando…</p></div>`;
+  $("#metPer").onclick = e=>{ const b=e.target.closest("[data-per]"); if(!b) return; periodoMet=b.dataset.per; carregarMetricas(); };
+  $("#metAtualizar").onclick = carregarMetricas;
+  const [ini, fim] = intervaloMet();
+  const { data, error } = await sb.rpc("loja_metricas", { p_inicio: ini.toISOString(), p_fim: fim.toISOString() });
+  if (error) { $("#metCorpo").innerHTML = `<div class="vazio"><b>Não foi possível carregar</b>${esc(error.message)}</div>`; return; }
+  desenharMetricas(data, ini, fim);
+}
+function pct(a, b){ return b ? Math.round(a/b*1000)/10 : 0; }
+function desenharMetricas(m, ini, fim){
+  const f = m.funil, nomeProd = id => (PRODUTOS.find(p=>p.id===id)||{}).nome || id;
+  const conv = pct(f.pagos, f.visitas), ticket = f.pagos ? f.faturamento / f.pagos : 0;
+  const max = Math.max(1, ...NOMES_FUNIL.map(([k])=>f[k]||0));
+  const funil = NOMES_FUNIL.map(([k,n,sub],i)=>{
+    const v = f[k]||0, ant = i ? (f[NOMES_FUNIL[i-1][0]]||0) : null;
+    const passo = i && ant ? `${pct(v, ant)}% da etapa anterior` : "";
+    return `<div class="funil-l"><div class="rot">${n}<small>${[sub, passo].filter(Boolean).join(" · ")}</small></div>
+      <div class="funil-barra" title="${n}: ${v}"><i style="width:${v/max*100}%"></i></div><b>${v}</b></div>`;
+  }).join("");
+  // dias
+  const mapa = {}; (m.dias||[]).forEach(d=>mapa[d.dia]=d);
+  const dias = []; for (let d = new Date(ini); d < fim; d.setDate(d.getDate()+1)) {
+    const k = d.toLocaleDateString("sv-SE",{timeZone:"America/Sao_Paulo"}); if (!dias.includes(k)) dias.push(k); }
+  const maxDia = Math.max(1, ...dias.map(k=>(mapa[k]||{}).visitas||0));
+  const fmt = k => k.slice(8,10)+"/"+k.slice(5,7);
+  const grafico = dias.length > 1 ? `<div class="met-bloco"><h3>Visitas por dia</h3><span class="ajuda">Passe o dedo ou o mouse nas barras para ver o número do dia.</span>
+    <div class="dias" role="img" aria-label="Visitas por dia">${dias.map(k=>{ const d=mapa[k]||{visitas:0,sacola:0};
+      return `<div title="${fmt(k)}: ${d.visitas} visita${d.visitas===1?"":"s"} · ${d.sacola} colocaram na sacola"><i style="height:${d.visitas/maxDia*100}%"></i></div>`; }).join("")}</div>
+    <div class="dias-eixo"><span>${fmt(dias[0])}</span><span>${fmt(dias[dias.length-1])}</span></div></div>` : "";
+  const origens = (m.origens||[]).map(o=>`<tr><td>${esc(o.origem)}</td><td class="n">${o.n}</td><td class="n">${pct(o.n, f.visitas)}%</td></tr>`).join("");
+  const disp = m.dispositivos||{};
+  const prods = (m.produtos||[]).map(p=>`<tr><td>${esc(nomeProd(p.produto_id))}</td><td class="n">${p.vistos}</td><td class="n">${p.sacola}</td></tr>`).join("");
+  const abertos = f.pedidos - f.pagos;
+  $("#metCorpo").innerHTML = `
+    <div class="met-cards">
+      <div class="met-card"><span>Visitas</span><b>${f.visitas}</b><small>${disp.celular||0} no celular · ${disp.computador||0} no computador</small></div>
+      <div class="met-card"><span>Vendas pagas</span><b>${f.pagos}</b><small>${conv}% das visitas compraram</small></div>
+      <div class="met-card"><span>Faturamento</span><b>${R$(f.faturamento)}</b><small>ticket médio ${R$(ticket)}</small></div>
+      <div class="met-card"><span>Quase compraram</span><b>${Math.max(0,abertos)}</b><small>pedidos aguardando pagamento</small></div>
+    </div>
+    <div class="met-bloco"><h3>Funil de compra</h3><span class="ajuda">Quantas pessoas chegaram em cada etapa. Cada pessoa conta uma vez por visita.</span><div class="funil">${funil}</div></div>
+    ${grafico}
+    <div class="met-2">
+      <div class="met-bloco"><h3>De onde vieram</h3><span class="ajuda">Para saber de qual post ou story veio, use links como keitemonik.com.br/?utm_source=instagram</span>
+        ${origens ? `<table class="met-tab"><thead><tr><th>Origem</th><th class="n">Visitas</th><th class="n">%</th></tr></thead><tbody>${origens}</tbody></table>` : `<p class="ajuda">Ainda sem visitas neste período.</p>`}</div>
+      <div class="met-bloco"><h3>Produtos mais vistos</h3><span class="ajuda">Pessoas que abriram o produto e que colocaram na sacola.</span>
+        ${prods ? `<table class="met-tab"><thead><tr><th>Produto</th><th class="n">Viram</th><th class="n">Sacola</th></tr></thead><tbody>${prods}</tbody></table>` : `<p class="ajuda">Ainda sem dados neste período.</p>`}</div>
+    </div>
+    ${abertos>0 ? `<p class="ajuda" style="margin-top:12px">Dica: os pedidos "Aguardando pagamento" estão na aba Pedidos, com o WhatsApp da cliente. Uma mensagem rápida costuma recuperar a venda.</p>` : ""}`;
+}
 
 /* ---------- Pedidos ---------- */
 async function carregarPedidos(){
@@ -695,6 +808,10 @@ function desenharAparencia(){
       <label class="check"><input type="checkbox" id="apReinicia"> Recomeçar a contagem agora ao salvar</label>
       <span class="ajuda">Vale para as opções que têm preço riscado. Desligada, a loja mostra o preço riscado como preço normal. Durante uma campanha, ela pausa sozinha.</span>
     </div>
+    <div class="bloco"><h3>Pixel da Meta (anúncios)</h3>
+      <label>ID do Pixel<input id="apPixel" inputmode="numeric" value="${esc(AP.meta_pixel_id||"")}" placeholder="Ex.: 1234567890123456"></label>
+      <span class="ajuda">Fica no Gerenciador de Eventos da Meta. Com ele, a loja avisa a Meta quando alguém vê um produto, coloca na sacola, vai para o pagamento e compra.</span>
+    </div>
     <div><button class="btn" id="apSalvar">Salvar aparência</button> <span class="erro" id="apErro"></span></div>
 
     <div class="bloco"><h3>Banners do dia a dia</h3>
@@ -716,8 +833,10 @@ function desenharAparencia(){
     const horas = parseInt($("#apHoras").value,10), min = parseInt($("#apMin").value,10);
     if (!(horas>=1 && horas<=720)) return $("#apErro").textContent = "Horas em promoção: entre 1 e 720.";
     if (!(min>=1 && min<=1440)) return $("#apErro").textContent = "Minutos no preço normal: entre 1 e 1440.";
+    const pixelId = $("#apPixel").value.replace(/\D/g,"");
+    if (pixelId && (pixelId.length < 10 || pixelId.length > 20)) return $("#apErro").textContent = "O ID do Pixel tem só números (normalmente 15 ou 16).";
     const dados = { cor_principal:$("#apCor1").value, cor_destaque:$("#apCor2").value, faixa_avisos: linhas($("#apFaixa").value),
-      oferta_ativa:$("#apOferta").checked, oferta_horas:horas, oferta_minutos:min, atualizado_em:new Date().toISOString(),
+      oferta_ativa:$("#apOferta").checked, oferta_horas:horas, oferta_minutos:min, meta_pixel_id: pixelId || null, atualizado_em:new Date().toISOString(),
       ...($("#apReinicia").checked ? {oferta_inicio:new Date().toISOString()} : {}) };
     const { error } = await sb.from("loja_aparencia").update(dados).eq("id", true);
     if (error) return $("#apErro").textContent = "Não foi possível salvar: " + error.message;

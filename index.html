@@ -442,6 +442,41 @@ function ler(k, padrao){ try{ return JSON.parse(localStorage.getItem(k)) ?? padr
 function salvar(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)) }catch{} }
 
 const SB_URL = "https://bdinijwgoajpiizxizhs.supabase.co", SB_KEY = "sb_publishable_RU98YL-ArsSMYaasML9TLQ_zGmNkSzU";
+
+/* ===== Métricas da loja (funil) e Pixel da Meta ===== */
+const SESSAO = (()=>{ try{ let x = sessionStorage.getItem("km_sessao"); if(!x){ x = Date.now().toString(36) + Math.random().toString(36).slice(2,10); sessionStorage.setItem("km_sessao", x); } return x; }catch{ return "s" + Date.now().toString(36) + Math.random().toString(36).slice(2,8); } })();
+const jaRegistrado = new Set();
+function origemVisita(){
+  const q = new URLSearchParams(location.search), u = (q.get("utm_source")||"").toLowerCase(), r = (document.referrer||"").toLowerCase();
+  if (u) return u.includes("insta")||u==="ig" ? "Instagram" : u.includes("face")||u==="fb" ? "Facebook" : u.includes("whats")||u==="wa" ? "WhatsApp" : u.includes("tiktok") ? "TikTok" : u.includes("google") ? "Google" : u.slice(0,40);
+  if (q.has("fbclid")) return r.includes("facebook") ? "Facebook" : "Instagram";
+  if (!r || r.includes(location.hostname)) return "Direto";
+  if (r.includes("instagram")) return "Instagram";
+  if (r.includes("facebook") || r.includes("fb.")) return "Facebook";
+  if (r.includes("google")) return "Google";
+  if (r.includes("whatsapp") || r.includes("wa.me")) return "WhatsApp";
+  if (r.includes("tiktok")) return "TikTok";
+  return "Outros sites";
+}
+function registrar(tipo, extra = {}){
+  const chave = tipo + ":" + (extra.produto_id||"");
+  if (jaRegistrado.has(chave) && tipo !== "add_sacola") return; jaRegistrado.add(chave);
+  try{ fetch(SB_URL + "/rest/v1/loja_eventos", {method:"POST", keepalive:true,
+    headers:{apikey:SB_KEY, "Content-Type":"application/json", Prefer:"return=minimal"},
+    body: JSON.stringify({sessao:SESSAO, tipo, ...extra})}).catch(()=>{}); }catch{}
+}
+try{ if (!sessionStorage.getItem("km_visitou")){ sessionStorage.setItem("km_visitou","1");
+  registrar("visita", {origem: origemVisita(), dispositivo: matchMedia("(max-width:719px)").matches ? "celular" : "computador"}); } }
+catch{ registrar("visita", {origem: origemVisita()}); }
+function pixel(evento, dados){ try{ if (window.fbq) fbq("track", evento, Object.assign({currency:"BRL"}, dados||{})); }catch{} }
+function ligarPixel(id){
+  id = String(id||"").replace(/\D/g,""); if (!id || window.fbq) return;
+  try{ localStorage.setItem("km_pixel", id); }catch{}
+  !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+  if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version="2.0";n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;
+  s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,"script","https://connect.facebook.net/en_US/fbevents.js");
+  fbq("init", id); fbq("track", "PageView");
+}
 async function sbGet(caminho){
   const r = await fetch(SB_URL + "/rest/v1/" + caminho, {headers:{apikey:SB_KEY}});
   if (!r.ok) throw new Error("banco"); return r.json();
@@ -480,7 +515,7 @@ function aplicarRegras(r){
 setInterval(()=>regrasDoPainel().then(r=>{ aplicarRegras(r); estadoAnterior="recarregar"; tique(); }).catch(()=>{}), 5*60e3);
 
 Promise.all([fetch("produtos.json").then(r=>r.json()), catalogoDoPainel().catch(()=>null), regrasDoPainel().catch(()=>null)]).then(([d, painel, regras])=>{
-  LOJA = d.loja; aplicarRegras(regras);
+  LOJA = d.loja; aplicarRegras(regras); ligarPixel(AP && AP.meta_pixel_id);
   PRODUTOS = painel ? painel.lista : deJson(d);
   // Ordem nova a cada visita (ao abrir ou atualizar a página); durante a navegação ela não muda
   for (let i = PRODUTOS.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [PRODUTOS[i], PRODUTOS[j]] = [PRODUTOS[j], PRODUTOS[i]]; }
@@ -582,6 +617,8 @@ function abrirProduto(id){
   const p = PRODUTOS.find(x=>x.id===id); qtdModal = 1;
   const ini = p.variantes.find(disponivel) || p.variantes[0];
   escolha = {peso: ini.peso_g||null, tam: ini.tamanho||null};
+  registrar("ver_produto", {produto_id: p.id});
+  pixel("ViewContent", {content_ids:[p.id], content_type:"product", content_name:p.nome, value: preco(ini)});
   $("#mCat").textContent = nomeCat(p);
   const fotos = p.fotos.length ? p.fotos.map(f=>`<img src="${esc(f)}" alt="${esc(p.nome)}">`).join("") : foto(p);
   const r = raizDe(p.categoria_id);
@@ -649,6 +686,9 @@ function adicionar(id, q){
   const limite = ref.v.estoque!=null ? Math.min(20, ref.v.estoque) : 20;
   if (limite<=0) return toast("Produto esgotado");
   if (it) it.qtd = Math.min(limite, it.qtd + q); else sacola.push({id, qtd:Math.min(limite,q)});
+  const valorAdd = Math.round(preco(ref.v) * q * 100) / 100;
+  registrar("add_sacola", {produto_id: ref.p.id, valor: valorAdd});
+  pixel("AddToCart", {content_ids:[ref.p.id], content_type:"product", content_name:ref.p.nome, value: valorAdd});
   mudouSacola(); toast("Adicionado à sacola ✓");
 }
 function mudouSacola(){ salvar("km_sacola2", sacola); fretes=[]; freteSel=null; contador(); if($("#gaveta").classList.contains("on")) renderSacola(); }
@@ -716,6 +756,7 @@ async function calcularFrete(){
     const d = await r.json().catch(()=>({erro:"O cálculo de frete ainda não está ativo neste endereço do site."}));
     if (!r.ok) throw new Error(d.erro || "Não foi possível calcular o frete.");
     fretes = d.opcoes; freteSel = fretes[0]; cepCotado = cep.slice(0,5)+"-"+cep.slice(5);
+    registrar("frete");
     const c = ler("km_cliente",{}); c.cep = cepCotado; salvar("km_cliente", c);
     renderSacola();
   }catch(err){ box.innerHTML = `<p class="msg erro">${esc(err.message)}</p>`; }
@@ -723,6 +764,8 @@ async function calcularFrete(){
 
 /* Dados de entrega e pagamento */
 function renderDados(){
+  registrar("entrega", {valor: Math.round(subtotal()*100)/100});
+  pixel("InitiateCheckout", {value: Math.round(subtotal()*100)/100, num_items: sacola.reduce((s,i)=>s+i.qtd,0), content_ids: [...new Set(sacola.map(i=>VARS[i.id].p.id))], content_type:"product"});
   $("#gTitulo").textContent = "Entrega";
   const c = Object.assign({}, ler("km_cliente",{}), {cep: cepCotado});
   const campo = (id, ph, extra="") => `<input id="f_${id}" placeholder="${ph}" value="${esc(c[id]||"")}" ${extra}>`;
@@ -773,7 +816,10 @@ async function pagar(){
     const d = await r.json().catch(()=>({erro:"O pagamento ainda não está ativo neste endereço do site."}));
     if (!r.ok) throw new Error(d.erro || "Não foi possível abrir o pagamento.");
     salvar("km_ultimo_pedido", {pedido:d.pedido, itens:sacola.map(i=>({...i, nome:rotulo(VARS[i.id].p, VARS[i.id].v)})), frete:d.frete, cliente, total: subtotal()+d.frete.preco});
-    location.href = d.url;
+    const totalPg = Math.round((subtotal()+d.frete.preco)*100)/100;
+    registrar("pagamento", {valor: totalPg});
+    pixel("AddPaymentInfo", {value: totalPg});
+    setTimeout(()=>{ location.href = d.url; }, 250);
   }catch(err){ erro.textContent = err.message; btn.disabled = false; btn.textContent = "Ir para o pagamento"; }
 }
 

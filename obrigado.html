@@ -50,7 +50,21 @@ if (ped){
 // confirma o pagamento no painel (o servidor confere direto no Mercado Pago)
 const pid = q.get("payment_id") || q.get("collection_id");
 if (pid && pid !== "null") fetch("/.netlify/functions/webhook-mp?payment_id=" + encodeURIComponent(pid)).catch(()=>{});
-if (status === "aprovado"){ try{ localStorage.removeItem("km_sacola") }catch{} }
+if (status === "aprovado"){
+  try{ localStorage.removeItem("km_sacola"); localStorage.removeItem("km_sacola2"); }catch{}
+  // Pixel da Meta: registra a compra uma única vez por pedido
+  try{
+    const px = localStorage.getItem("km_pixel"), feito = localStorage.getItem("km_pixel_compra");
+    if (px && ped && feito !== ped.pedido){
+      !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+      if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version="2.0";n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;
+      s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,"script","https://connect.facebook.net/en_US/fbevents.js");
+      fbq("init", px); fbq("track", "PageView");
+      fbq("track", "Purchase", {value: Number(ped.total)||0, currency: "BRL", num_items: ped.itens.reduce((s,i)=>s+i.qtd,0)}, {eventID: ped.pedido});
+      localStorage.setItem("km_pixel_compra", ped.pedido);
+    }
+  }catch{}
+}
 
 document.getElementById("box").innerHTML = `
   <div class="ic" style="background:${txt.cor}">${txt.ic}</div>
