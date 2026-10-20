@@ -10,8 +10,9 @@ const API = process.env.SUPERFRETE_SANDBOX === "true"
 
 function soDigitos(v) { return String(v || "").replace(/\D/g, ""); }
 
+const fmtPeso = (g) => (g >= 1000 ? String(g / 1000).replace(".", ",") + "kg" : g + "g");
 function rotulo(v) {
-  return [v.produtoNome, v.peso_g ? v.peso_g + "g" : null, v.tamanho].filter(Boolean).join(" · ");
+  return [v.produtoNome, v.peso_g ? fmtPeso(v.peso_g) : null, v.tamanho].filter(Boolean).join(" · ");
 }
 
 // Confere os itens da sacola com o painel (o preço nunca vem do navegador)
@@ -20,6 +21,8 @@ async function validarItens(itens) {
   const [mapa, regras] = await Promise.all([variacoesAtivas(itens.map((i) => i.id)), regrasDePreco()]);
   // 5 min de tolerância para quem estava pagando quando a oferta/campanha virou
   const ctx = Precos.contexto(regras.aparencia, regras.campanhas, Date.now(), 5);
+  // desconto progressivo: conta quantas unidades da sacola entram na faixa
+  ctx.qtdProg = Precos.qtdProgressivo(ctx, itens.map((i) => ({ v: mapa[i.id], qtd: Math.max(1, Math.min(20, parseInt(i.qtd, 10) || 1)) })));
   return itens.map((i) => {
     const v = mapa[i.id];
     const qtd = Math.max(1, Math.min(20, parseInt(i.qtd, 10) || 1));
@@ -28,7 +31,7 @@ async function validarItens(itens) {
     if (v.estoque != null && v.estoque < qtd) {
       throw new Error(v.estoque === 0 ? `${nome} esgotou.` : `Só temos ${v.estoque} unidade(s) de ${nome}.`);
     }
-    const preco = Precos.precoInfo({ id: v.variante_id, preco: v.preco, precoDe: v.precoDe, categoria_id: v.categoria_id, pai_id: v.pai_id, fixo: v.fixo }, ctx).preco;
+    const preco = Precos.precoInfo({ id: v.variante_id, preco: v.preco, precoDe: v.precoDe, categoria_id: v.categoria_id, pai_id: v.pai_id, peso_g: v.peso_g, fixo: v.fixo, precoOferta2: v.precoOferta2 }, ctx).preco;
     return { ...v, nome, preco, qtd };
   });
 }

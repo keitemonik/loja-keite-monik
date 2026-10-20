@@ -536,7 +536,7 @@ function abrirProduto(p){
       <div><b style="font-size:13px">Tamanho</b><div class="opchips" id="selTams"></div></div>
       <div id="semPeso" hidden><label>Peso para o frete (g)<input id="fGramas" inputmode="numeric" value="${p.gramas||100}"></label></div>
       <div id="gradeVar" style="display:grid;gap:8px"></div>
-      <span class="ajuda">Preço riscado é opcional. Com ele, a variação entra na oferta relâmpago, a não ser que o produto esteja marcado como "Desconto fixo". Estoque vazio = não controlar.</span>
+      <span class="ajuda">Preço riscado é opcional. Com ele, a variação entra na oferta relâmpago (a não ser que o produto esteja marcado como "Desconto fixo"). "Oferta 2" é o preço da Super oferta, que alterna com a oferta 1; vazio = usa o mesmo preço. Estoque vazio = não controlar.</span>
     </div>
     <span class="erro" id="fErro"></span>`;
   $("#gBase").innerHTML = `<button class="btn" id="fSalvar">${novo?"Cadastrar produto":"Salvar alterações"}</button>`;
@@ -548,7 +548,7 @@ function abrirProduto(p){
 function guardarGrade(){
   document.querySelectorAll("#gradeVar [data-k]").forEach(row=>{
     const k = row.dataset.k, v = varEdit[k] || (varEdit[k] = {});
-    v._preco = row.querySelector("[data-c=preco]").value; v._de = row.querySelector("[data-c=de]").value;
+    v._preco = row.querySelector("[data-c=preco]").value; v._de = row.querySelector("[data-c=de]").value; v._o2 = row.querySelector("[data-c=o2]").value;
     v._est = row.querySelector("[data-c=est]").value; v._on = row.querySelector("[data-c=on]").checked;
   });
 }
@@ -565,15 +565,16 @@ function desenharOpcoes(){
     const k = chave(g,t);
     if (!varEdit[k]) { // combinação nova: começa com o preço da variação mais parecida que já existia
       const base = varEdit[chave(g,null)] || varEdit[chave(null,t)] || varEdit[chave(null,null)];
-      varEdit[k] = base ? { _preco: base._preco ?? br(base.preco), _de: base._de ?? br(base.preco_de) } : {};
+      varEdit[k] = base ? { _preco: base._preco ?? br(base.preco), _de: base._de ?? br(base.preco_de), _o2: base._o2 ?? br(base.preco_oferta2) } : {};
     }
     const v = varEdit[k];
     const nome = [g?g+"g":null, t].filter(Boolean).join(" · ") || "Preço único";
     const on = v._on ?? (v.ativo ?? true);
-    return `<div data-k="${esc(k)}" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;padding:10px;border:1px solid var(--line);border-radius:10px;${on?"":"opacity:.55"}">
+    return `<div data-k="${esc(k)}" style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;padding:10px;border:1px solid var(--line);border-radius:10px;${on?"":"opacity:.55"}">
       <label class="check" style="grid-column:1/-1;justify-content:space-between"><span>${esc(nome)}</span><span style="display:flex;gap:6px;align-items:center;font-weight:400;font-size:13px"><input type="checkbox" data-c="on" ${on?"checked":""}> à venda</span></label>
       <label>Preço<input data-c="preco" inputmode="decimal" placeholder="0,00" value="${esc(v._preco ?? br(v.preco))}"></label>
       <label>Riscado<input data-c="de" inputmode="decimal" placeholder="opcional" value="${esc(v._de ?? br(v.preco_de))}"></label>
+      <label title="Preço na Super oferta (oferta 2)">Oferta 2<input data-c="o2" inputmode="decimal" placeholder="—" value="${esc(v._o2 ?? br(v.preco_oferta2))}"></label>
       <label>Estoque<input data-c="est" inputmode="numeric" placeholder="—" value="${esc(v._est ?? (v.estoque??""))}"></label>
     </div>`;
   })).join("");
@@ -643,12 +644,13 @@ async function salvarProduto(novo, p){
   const linhas = [];
   for (const g of pes) for (const t of tas){
     const k = chave(g,t), v = varEdit[k] || {}, rot = [g?g+"g":null, t].filter(Boolean).join(" · ") || "o produto";
-    const on = v._on ?? true, preco = num(v._preco ?? v.preco), de = num(v._de ?? v.preco_de), est = String(v._est ?? (v.estoque ?? "")).trim();
+    const on = v._on ?? true, preco = num(v._preco ?? v.preco), de = num(v._de ?? v.preco_de), o2 = num(v._o2 ?? v.preco_oferta2), est = String(v._est ?? (v.estoque ?? "")).trim();
     if (!on && !preco) { if (v.id) linhas.push({id:v.id, ativo:false}); continue; }
     if (!preco || preco<=0) return erro(`Coloque o preço de ${rot} (ou desmarque "à venda").`);
     if (de!=null && de<=preco) return erro(`Em ${rot}, o preço riscado precisa ser maior que o preço.`);
     if (est!=="" && !(parseInt(est,10)>=0)) return erro(`Estoque de ${rot} precisa ser um número.`);
-    linhas.push({ ...(v.id?{id:v.id}:{}), peso_g:g, tamanho:t, preco, preco_de:de, estoque: est===""?null:parseInt(est,10), ativo:on, ordem:linhas.length+1 });
+    if (o2!=null && (de==null || o2>=de)) return erro(`Em ${rot}, o preço da Oferta 2 precisa ser menor que o riscado (e precisa ter riscado).`);
+    linhas.push({ ...(v.id?{id:v.id}:{}), peso_g:g, tamanho:t, preco, preco_de:de, preco_oferta2:o2, estoque: est===""?null:parseInt(est,10), ativo:on, ordem:linhas.length+1 });
   }
   if (!linhas.some(l=>l.ativo!==false)) return erro("Deixe pelo menos uma opção à venda.");
   const gramas = pesosSel.length ? Math.max(...pesosSel) : (parseInt($("#fGramas").value,10)||100);
@@ -799,14 +801,22 @@ function desenharAparencia(){
     <div class="bloco"><h3>Faixa rodando no topo</h3>
       <label>Um aviso por linha<textarea id="apFaixa" rows="5">${esc((AP.faixa_avisos||[]).join("\n"))}</textarea></label>
     </div>
-    <div class="bloco"><h3>Oferta relâmpago</h3>
-      <label class="check"><input type="checkbox" id="apOferta" ${AP.oferta_ativa?"checked":""}> Oferta relâmpago ligada</label>
+    <div class="bloco"><h3>Oferta relâmpago 1</h3>
+      <label class="check"><input type="checkbox" id="apOferta" ${AP.oferta_ativa?"checked":""}> Oferta relâmpago 1 ligada</label>
       <div class="grid2">
         <label>Horas em promoção<input id="apHoras" inputmode="numeric" value="${AP.oferta_horas}"></label>
-        <label>Minutos no preço normal<input id="apMin" inputmode="numeric" value="${AP.oferta_minutos}"></label>
+        <label>Minutos no preço normal depois dela<input id="apMin" inputmode="numeric" value="${AP.oferta_minutos}"></label>
       </div>
       <label class="check"><input type="checkbox" id="apReinicia"> Recomeçar a contagem agora ao salvar</label>
       <span class="ajuda">Vale para as opções que têm preço riscado. Desligada, a loja mostra o preço riscado como preço normal. Durante uma campanha, ela pausa sozinha.</span>
+    </div>
+    <div class="bloco"><h3>Super oferta (oferta 2)</h3>
+      <label class="check"><input type="checkbox" id="apOferta2" ${AP.oferta2_ativa?"checked":""}> Alternar com uma Super oferta</label>
+      <div class="grid2">
+        <label>Horas em promoção<input id="apHoras2" inputmode="numeric" value="${AP.oferta2_horas ?? 48}"></label>
+        <label>Horas no preço normal depois dela<input id="apPausa2" inputmode="decimal" value="${String(((AP.oferta2_minutos ?? 360))/60).replace(".",",")}"></label>
+      </div>
+      <span class="ajuda">Ciclo: oferta 1 → pausa → Super oferta → pausa → repete. Na Super oferta vale o preço "Oferta 2" de cada produto (quem não tiver, fica no preço da oferta 1). A loja mostra um contador por vez.</span>
     </div>
     <div class="bloco"><h3>Pixel da Meta (anúncios)</h3>
       <label>ID do Pixel<input id="apPixel" inputmode="numeric" value="${esc(AP.meta_pixel_id||"")}" placeholder="Ex.: 1234567890123456"></label>
@@ -833,10 +843,15 @@ function desenharAparencia(){
     const horas = parseInt($("#apHoras").value,10), min = parseInt($("#apMin").value,10);
     if (!(horas>=1 && horas<=720)) return $("#apErro").textContent = "Horas em promoção: entre 1 e 720.";
     if (!(min>=1 && min<=1440)) return $("#apErro").textContent = "Minutos no preço normal: entre 1 e 1440.";
+    const horas2 = parseInt($("#apHoras2").value,10), pausa2 = num($("#apPausa2").value);
+    if ($("#apOferta2").checked && !(horas2>=1 && horas2<=720)) return $("#apErro").textContent = "Oferta 2: horas em promoção entre 1 e 720.";
+    if ($("#apOferta2").checked && !(pausa2>0 && pausa2<=72)) return $("#apErro").textContent = "Oferta 2: pausa entre 0,5 e 72 horas.";
     const pixelId = $("#apPixel").value.replace(/\D/g,"");
     if (pixelId && (pixelId.length < 10 || pixelId.length > 20)) return $("#apErro").textContent = "O ID do Pixel tem só números (normalmente 15 ou 16).";
     const dados = { cor_principal:$("#apCor1").value, cor_destaque:$("#apCor2").value, faixa_avisos: linhas($("#apFaixa").value),
       oferta_ativa:$("#apOferta").checked, oferta_horas:horas, oferta_minutos:min, meta_pixel_id: pixelId || null, atualizado_em:new Date().toISOString(),
+      oferta2_ativa: $("#apOferta2").checked, ...(horas2>=1 ? {oferta2_horas: horas2} : {}), ...(pausa2>0 ? {oferta2_minutos: Math.round(pausa2*60)} : {}),
+
       ...($("#apReinicia").checked ? {oferta_inicio:new Date().toISOString()} : {}) };
     const { error } = await sb.from("loja_aparencia").update(dados).eq("id", true);
     if (error) return $("#apErro").textContent = "Não foi possível salvar: " + error.message;
@@ -996,8 +1011,20 @@ async function abrirCampanha(c, copia){
         return `<details ${n?"open":""} style="border:1px solid var(--line);border-radius:10px;padding:8px 10px">
           <summary style="cursor:pointer;font-weight:500">${esc(p.nome)}${n?` <span class="pill st-pago">${n}</span>`:""}</summary>
           <div style="display:grid;gap:6px;margin-top:8px">${vs.map(v=>`<label style="display:grid;grid-template-columns:1fr 120px;align-items:center;gap:8px;color:var(--ink);font-weight:400">
-            <span>${esc([v.peso_g?v.peso_g+"g":null, v.tamanho].filter(Boolean).join(" · ")||"Preço único")} <span class="ajuda">(normal ${R$(v.preco_de??v.preco)})</span></span>
+            <span>${esc([v.peso_g?(v.peso_g>=1000?String(v.peso_g/1000).replace(".",",")+"kg":v.peso_g+"g"):null, v.tamanho].filter(Boolean).join(" · ")||"Preço único")} <span class="ajuda">(normal ${R$(v.preco_de??v.preco)} · dia a dia ${R$(v.preco)})</span></span>
             <input data-preco-camp="${v.id}" inputmode="decimal" placeholder="—" value="${br(precosCamp[v.id])}"></label>`).join("")}</div></details>`; }).join("")}
+    </div>
+    <div class="bloco"><h3>Preço riscado ("de")</h3>
+      <label class="check"><input type="checkbox" id="cpRiscAtual" ${base.riscado_atual?"checked":""}> Mostrar como "de" o preço de todo dia (ex.: R$ 149,90), e não o preço cheio</label>
+      <span class="ajuda">Recomendado em datas como a Black Friday: o "de" fica igual ao preço que a cliente costuma ver na loja.</span>
+    </div>
+    <div class="bloco"><h3>Desconto progressivo (leve mais, pague menos)</h3>
+      <label class="check"><input type="checkbox" id="cpProg" ${base.progressivo?"checked":""}> Ligar desconto progressivo</label>
+      <div id="cpProgBox" ${base.progressivo?"":"hidden"} style="display:grid;gap:10px">
+        <label>Vale para<select id="cpProgCat">${CATS.map(x=>`<option value="${esc(x.id)}" ${x.id===(base.progressivo&&base.progressivo.categoria_id)?"selected":""}>${esc(caminhoCat(x.id))}</option>`).join("")}</select></label>
+        <span class="ajuda">Coloque o preço de cada unidade em cada faixa (ex.: a partir de 1 = R$ 119,90; a partir de 2 = R$ 109,90; a partir de 3 = R$ 100). Conta tudo da categoria junto: cores, tamanhos e pesos misturados. Produtos novos dessa categoria entram sozinhos.</span>
+        <div id="cpFaixas"></div>
+      </div>
     </div>
     <div class="bloco"><h3>Visual da campanha</h3>
       <label class="check"><input type="checkbox" id="cpCores" ${base.cor_principal?"checked":""}> Usar cores próprias</label>
@@ -1010,6 +1037,7 @@ async function abrirCampanha(c, copia){
         <input type="file" id="cpLogo" accept="image/png,image/webp" hidden></div>
       <label>Faixa do topo (um aviso por linha)<textarea id="cpFaixa" rows="3" placeholder="Vazio = usa a faixa normal">${esc((base.faixa_avisos||[]).join("\n"))}</textarea></label>
       <label class="check"><input type="checkbox" id="cpContador" ${base.contador?"checked":""}> Mostrar contador regressivo até o fim</label>
+      <label class="check"><input type="checkbox" id="cpEscuro" ${base.tema_escuro?"checked":""}> Tema escuro (fundo preto e dourado, como na Black Friday)</label>
     </div>
     <div class="bloco"><h3>Banners da campanha</h3>
       ${novo ? `<span class="ajuda">Salve a campanha primeiro para adicionar banners. Sem banner próprio, a loja usa os banners do dia a dia.</span>`
@@ -1019,6 +1047,21 @@ async function abrirCampanha(c, copia){
   $("#gBase").innerHTML = `<button class="btn" id="cpSalvar">${novo?"Criar campanha":"Salvar"}</button>
     ${novo?"":`<button class="btn2" id="cpCopiar">Duplicar</button><button class="btn2" id="cpApagar" style="color:var(--err)">Apagar</button>`}`;
   $("#cpCores").onchange = e=> $("#cpCoresBox").hidden = !e.target.checked;
+  // faixas do progressivo
+  const faixasIni = (base.progressivo && base.progressivo.faixas) || [{min:1,precos:{}},{min:2,precos:{}},{min:3,precos:{}}];
+  const pesosDaCat = catId => [...new Set(PRODUTOS.filter(p=>{ const c = CATS.find(x=>x.id===p.categoria_id); return p.categoria_id===catId || (c && c.pai_id===catId); })
+      .flatMap(p=>p.variantes.filter(v=>v.ativo).map(v=>v.peso_g)).filter(Boolean))].sort((a,b)=>a-b);
+  const desenharFaixas = (faixas)=>{
+    const pesos = pesosDaCat($("#cpProgCat").value);
+    const linhas = [...faixas]; while (linhas.length < 3) linhas.push({min:"", precos:{}});
+    $("#cpFaixas").innerHTML = pesos.length ? linhas.map((f,i)=>`<div class="faixa-prog" style="display:grid;grid-template-columns:repeat(${pesos.length+1},minmax(0,1fr));gap:8px;align-items:end">
+        <label>A partir de<input data-fx-min="${i}" inputmode="numeric" value="${f.min||""}" placeholder="ex.: ${i+1}"></label>
+        ${pesos.map(g=>`<label>${g>=1000?String(g/1000).replace(".",",")+"kg":g+"g"} (cada)<input data-fx="${i}" data-peso="${g}" inputmode="decimal" placeholder="—" value="${br(f.precos&&f.precos[String(g)])}"></label>`).join("")}</div>`).join("")
+      : `<p class="ajuda">Essa categoria ainda não tem produtos com peso.</p>`;
+  };
+  desenharFaixas(faixasIni);
+  $("#cpProg").onchange = e=> $("#cpProgBox").hidden = !e.target.checked;
+  $("#cpProgCat").onchange = ()=> desenharFaixas(lerFaixas());
   $("#cpLogo").onchange = async e=>{ const f=e.target.files[0]; if(!f) return;
     try{ toast("Enviando logo…"); logoCamp = await enviarImagem(f, "logo", true); $("#cpLogoPrev").innerHTML = `<img src="${urlImg(logoCamp)}" alt="" style="height:60px">`; toast("Logo carregada ✓ Salve a campanha."); }
     catch(err){ toast("Erro: " + (err.message||err)); } };
@@ -1035,6 +1078,15 @@ async function abrirCampanha(c, copia){
   };
   abrirGaveta();
 }
+function lerFaixas(){
+  const fx = [];
+  document.querySelectorAll("[data-fx-min]").forEach(el=>{
+    const i = el.dataset.fxMin, min = parseInt(el.value,10); const precos = {};
+    document.querySelectorAll(`[data-fx="${i}"]`).forEach(x=>{ const v = num(x.value); if (v!=null) precos[x.dataset.peso] = v; });
+    if (min>0 || Object.keys(precos).length) fx.push({min: min||0, precos});
+  });
+  return fx;
+}
 async function salvarCampanha(c){
   const erro = m => { $("#cpErro").textContent = m; $("#cpErro").scrollIntoView({behavior:"smooth", block:"center"}); };
   const nome = $("#cpNome").value.trim(), ini = $("#cpIni").value, fim = $("#cpFim").value;
@@ -1050,12 +1102,24 @@ async function salvarCampanha(c){
     if (!(v>0)) return erro("Confira os preços específicos: use só números, como 129,90.");
     precos.push({ variante_id: el.dataset.precoCamp, preco: v });
   }
-  if (pct==null && !precos.length) return erro("Coloque um desconto geral ou pelo menos um preço específico.");
+  let progressivo = null;
+  if ($("#cpProg").checked){
+    const fx = lerFaixas();
+    for (const f of fx){
+      if (!(f.min>=1)) return erro("Progressivo: em cada faixa, coloque a partir de quantas unidades.");
+      if (!Object.keys(f.precos).length) return erro(`Progressivo: coloque o preço da faixa "a partir de ${f.min}".`);
+      if (Object.values(f.precos).some(v=>!(v>0))) return erro("Progressivo: confira os preços, use só números como 109,90.");
+    }
+    if (!fx.length) return erro("Progressivo: preencha pelo menos uma faixa ou desligue a opção.");
+    progressivo = { categoria_id: $("#cpProgCat").value, faixas: fx.sort((a,b)=>a.min-b.min) };
+  }
+  if (pct==null && !precos.length && !progressivo) return erro("Coloque um desconto geral, um preço específico ou o desconto progressivo.");
   const cores = $("#cpCores").checked;
   const dados = { nome, inicio:inicio.toISOString(), fim:termino.toISOString(), ativo:$("#cpAtivo").checked,
     prioridade: parseInt($("#cpPri").value,10)||0, desconto_pct:pct, desconto_categoria_id: pct!=null ? ($("#cpCat").value||null) : null,
     cor_principal: cores ? $("#cpCor1").value : null, cor_destaque: cores ? $("#cpCor2").value : null,
-    logo_url: logoCamp, faixa_avisos: linhas($("#cpFaixa").value), contador: $("#cpContador").checked };
+    logo_url: logoCamp, faixa_avisos: linhas($("#cpFaixa").value), contador: $("#cpContador").checked,
+    tema_escuro: $("#cpEscuro").checked, riscado_atual: $("#cpRiscAtual").checked, progressivo };
   $("#cpSalvar").disabled = true;
   let id = c && c.id, res;
   if (c) res = await sb.from("loja_campanhas").update(dados).eq("id", id);

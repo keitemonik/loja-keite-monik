@@ -24,7 +24,7 @@ async function variacoesAtivas(ids) {
     mapa[v.id] = {
       variante_id: v.id, produto_id: v.produto.id, produtoNome: v.produto.nome,
       peso_g: v.peso_g, tamanho: v.tamanho, preco: Number(v.preco),
-      precoDe: v.preco_de == null ? null : Number(v.preco_de), estoque: v.estoque,
+      precoDe: v.preco_de == null ? null : Number(v.preco_de), precoOferta2: v.preco_oferta2 == null ? null : Number(v.preco_oferta2), estoque: v.estoque,
       gramas: v.peso_g || v.produto.gramas || 100, fotos: v.produto.fotos || [],
       categoria_id: cat.id || null, pai_id: cat.pai_id || null, fixo: !!v.produto.desconto_fixo,
       tipo_crm: cat.tipo_crm || "outro",
@@ -37,8 +37,8 @@ async function variacoesAtivas(ids) {
 // Aparência (oferta relâmpago) + campanhas no ar e seus preços especiais
 async function regrasDePreco() {
   const [ap, campanhas] = await Promise.all([
-    rest("loja_aparencia?select=oferta_ativa,oferta_inicio,oferta_horas,oferta_minutos&limit=1"),
-    rest("loja_campanhas?select=id,nome,inicio,fim,prioridade,ativo,desconto_pct,desconto_categoria_id"),
+    rest("loja_aparencia?select=oferta_ativa,oferta_inicio,oferta_horas,oferta_minutos,oferta2_ativa,oferta2_inicio,oferta2_horas,oferta2_minutos&limit=1"),
+    rest("loja_campanhas?select=id,nome,inicio,fim,prioridade,ativo,desconto_pct,desconto_categoria_id,progressivo,riscado_atual"),
   ]);
   const lista = campanhas || [];
   if (lista.length) {
